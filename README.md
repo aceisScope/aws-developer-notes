@@ -233,6 +233,11 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 * Cross zone load balancing: always on for ALB, disabled by default for NLB
 * SNI to load multiple SSL certs to servce multple websites on one server on ALB and NLB
 
+## Auto Scaling Groups
+
+* [Scaling policies: target tracking, simple/step, schedule action](https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scale-based-on-demand.html#as-scaling-types)
+* [Cooldowns](https://docs.aws.amazon.com/autoscaling/ec2/userguide/Cooldown.html)
+
 # S3
 
 [S3 FAQ](https://aws.amazon.com/s3/faqs/)
