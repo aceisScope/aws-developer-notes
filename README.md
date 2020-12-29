@@ -223,9 +223,9 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 
 * There are 3 types of load balancer; Application, Network and Classic. Application is used to route HTTP/HTTPS (L7) traffic. Network and Classic are used to route TCP (L4) traffic.
 
-    1. Application - TLS termination
+    1. Application - Layer 7, target groups (based on path, hostname, query string), TLS termination
     2. Network - Extermeme performance and static IP
-    3. Classic (also refered to as Elastic Load Balancer ELB) - 
+    3. Classic (also refered to as Elastic Load Balancer ELB) - Layer 4 & 7, Fixed hostname
 
 * Sticky sessions are a mechanism to route requests to the same target in a target group. This is useful for servers that maintain state information in order to provide a continuous experience to clients.
 
