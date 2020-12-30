@@ -11,6 +11,8 @@ Table of Contents
 
 * [EC2](#EC2)
 
+* [EBS & EFS](#ebs--efs)
+
 * [S3](#S3)
 
 * [DynamoDB](#DynamoDB)
