@@ -13,6 +13,8 @@ Table of Contents
 
 * [EBS & EFS](#ebs--efs)
 
+* [RDS](#RDS)
+
 * [S3](#S3)
 
 * [DynamoDB](#DynamoDB)
@@ -261,6 +263,54 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 
 * Managed NFS, multi AZ
 * Usage case: content management, web serving, data sharing, Wordpress
+
+# RDS
+
+## RDS
+
+* Supports Postgres, MySQL, MariaDB, Oracle, Microsoft SQL Server
+* Backup automatically, 7 - 35 days retention
+* Snapshots triggered manually
+
+### Read replicas: 
+* up to 5
+* within AZ, cross AZ or cross region
+* ASYNC
+* network cost when data goes over AZs, so extra cost if read replicas are in different AZs
+* can be setup as multi AZ for disaster recovery
+* Multi AZ: SYNC, one DNS name, disaster recovery
+
+### Encryption
+
+* At rest encryption has to be defined at launch time. If master is not encrypted, read replicas can't be encrypted.
+    * Whether a snapshot is encrypted is defined by whether the RDS is encrypted or not
+    * How to encrypt an unencrypted RDS
+* In-flight encryption: SSL certificates 
+
+### IAM Authentication
+
+* IAM database authentication works with RDS MySQL and PostgresSQL 
+
+## Aurora
+
+* Support MySQL and PostgresSQL 
+* From 10G Up to 64TB
+* 15 replicas
+* ***Infrequent, intermittent or unpredicatable workloads***, pay per second
+
+### HA
+
+* 6 copies over 3 AZ, one instance is master
+* Writer endpoint pointed to master, reader endpoint pointed to connection load balancing that connects to all read replicas
+* Cross region or global (1 primary region, up to 5 secondary region, up to 16 read replica per secondary region)
+
+## ElastiCache
+
+* Managed memcached and Redis
+    * Redis: Multi AZ, Read replicas, Data Durability with AOF, backup and restore
+    * memcached: sharding, non persistence, no backup or restore, multi-threaded
+* Multi AZ
+* [Strategies](https://aws.amazon.com/caching/best-practices/): Lazy loading, Write through, Time-to-live, Evictions
 
 # S3
 
