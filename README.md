@@ -238,6 +238,28 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 * [Scaling policies: target tracking, simple/step, schedule action](https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scale-based-on-demand.html#as-scaling-types)
 * [Cooldowns](https://docs.aws.amazon.com/autoscaling/ec2/userguide/Cooldown.html)
 
+# EBS & EFS
+
+## EBS
+
+* Network drive, can be attached to only on instance, locked to AZ
+* EBS has four types: 
+    * SSD (can be used as boot volumes): 
+      * GP2: 3 IOPS/GB, max IOPS is 16000
+      * IOI: high performance, provisioned IOPS (max 64000 Nitro or 32000)
+    * HDD: 
+      * STI: throughput optimized, streaming workload, e.g. Apache Kafka
+      * SCI: lowest cost
+      
+## Instance Store
+
+* Physically attached disk, very high IOPS (100k ~ millions), can't be increased in size, ***data lost on stop or termination***. e.g. High-performance cache.
+
+## EFS
+
+* Managed NFS, multi AZ
+* Usage case: content management, web serving, data sharing, Wordpress
+
 # S3
 
 [S3 FAQ](https://aws.amazon.com/s3/faqs/)
