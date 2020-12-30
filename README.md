@@ -285,6 +285,7 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 * At rest encryption has to be defined at launch time. If master is not encrypted, read replicas can't be encrypted.
     * Whether a snapshot is encrypted is defined by whether the RDS is encrypted or not
     * How to encrypt an unencrypted RDS
+    * TDE: Microsoft and Oracle
 * In-flight encryption: SSL certificates 
 
 ### IAM Authentication
