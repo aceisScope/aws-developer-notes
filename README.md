@@ -567,19 +567,28 @@ SaaS – AWS manages everything except user credentials.
 
 [VPC FAQ](https://aws.amazon.com/vpc/faqs/)
 
-* By default all traffic between subnets is allowed
+* VPC: Region 
 
-* /16 is the largest CIDR block available
+* Subnet: AZ
+    * public and private
+    * ***Route tables***: to define access between internet and subnets
+    * By default all traffic between subnets is allowed
 
-* Subnets have a 1 to 1 mapping to an Availability Zone
+* Internet Gateway helps VPC instances connect with the internet. One IGW per VPC. A public subnet always has a route to IGW.
 
-* 1 Internet Gateway per VPC
+* NAT allows instances in ***private*** subnets to access the internet. Deployed in the public subnet, connected to IGW, then create a route from private subnet to NAT.
 
-* You cannot change the ip range of a VPC
+* /16 is the largest CIDR block available. You cannot change the ip range of a VPC
 
-* Elastic IP addresses (EIPs) are public IP addresses that
+* Network ACL: a firewall that controls traffic in/out from a ***subnet*** (DENY/ALLOW) <---> Differ from security groups (at ENI/EC2 level, ALLOW only)
 
-* Elastic Network interface
+* VPC Flow logs: information about IP traffic going into interfaces. For troubleshooting.
+
+* VPC Peering: connect two VPCs, privately using AWS network, not transitive. The peered VPCs must not have overlapping CIDR.
+
+* VPC Endpoints: connect to AWS services from with a VPC using a private network. Gateway for S3 and DynamoDB, ENI for the rest.
+
+* From on-premise to AWS: VPN goes over the public internet, Direct Connect goes over a private network by establishing a physical connection.
 
 # CloudFront
 
