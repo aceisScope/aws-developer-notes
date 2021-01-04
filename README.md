@@ -317,42 +317,48 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 
 [S3 FAQ](https://aws.amazon.com/s3/faqs/)
 
-### Storage classes
-
-* Buckets can contain objects of different storage classes
-
-1. S3 Standard
-2. S3 Standard-Infrequent Access - for data that is less frequently accessed but requires rapid access when needed. Availability drops to 99.9% and there is a data retrieval charge of $0.01 / GB.
-3. S3 One Zone-Infrequent Access - Offers similar performance as other S3 classes but stores data redundantly within an Availability Zone not across Availability Zones.
-4. Glacier - used for archiving data.
-
+* Max object size is 5TB, min object size is 0 bytes. Largest upload in a single PUT is 5GB. (Objects larger than 100MB should be uploaded with multipart uploader)
 * No limit on number of objects in a bucket
-* Largest object size is 5TB
-* Smallest object size is 0 bytes
-* Largest upload in a single PUT is 5GB. (Objects larger than 100MB should be uploaded with multipart uploader)
-* A bucket cannot contain a bucket
-
-* Need to delete large amounts of
-
-* S3 provides read-after-write consistency for PUTS of new objects.
-* S3 offers eventual consistency for overwrite PUTS and DELETES.
+* Versioning needs to be enabled at bucket level. Same key overwrite will increase the version. If it's not enabled, file will be versioned "null".
 
 * If you expect more than 300 PUT/LIST/DELETE requests per second or more than 800 GET request per second raise a support request with AWS to prepare for the workload.
 
 * Event notifications can sent in response to actions such as PUTs, POSTs, COPYs or DELETEs, Messages can be sent through SNS, SQS or Lambda.
 
-* CORS (Cross-Origin resource sharing) enables a way for client web applications loaded in one domain to interact with resources in a different domain.
-
 ### Encryption
 
 * Server-Side
-1. KMS-Managed Encryption keys
-2. Amazon S3-Managed Encryption keys
-3. Customer-Provided Encryption keys
+  1. SSE-KMS: KMS-Managed Encryption keys. Give user control and audit trail. Must set header `"x-amz-server-side-encryption":"aws:kms"`
+  2. SSE-S3: Amazon S3-Managed Encryption keys. Must set header `"x-amz-server-side-encryption":"AES-256"`
+  3. SSE-C: Customer-Provided Encryption keys. S3 does not store the key. Must use HTTPS. Must provide key in header.
 
 * Client-Side
-1. AWS KMS-managed customer master key
-2. Client-side master key
+  1. AWS KMS-managed customer master key
+  2. Client-side master key
+
+### Security
+
+* If user IAM allows or resource policy ALLOWs, an IAM principal can access an S3 object. Unless there's an explicit DENY in IAM policy.
+* Bucket policy: JSON based. ALLOW / DENY.
+* Bucket settings for blocking public access to prevent data leaks
+
+### Websites
+
+* S3 cab host static websites `<bucket-name>.s3-website.<AWS-region>.com`. Neet to make bucket policy allow public reads otherwise will get 403.
+* CORS (Cross-Origin resource sharing) enables a way for client web applications loaded in one domain to interact with resources in a different domain. If a client does a cross-origin request on S3 bucket, we need to enable correct CORS headers `"AllowOrigins":<First-bucket-name>` on the cross origin bucket.
+
+### Consistency Model
+
+* S3 provides read-after-write consistency for PUTS of new objects. S3 offers eventual consistency for overwrite PUTS and DELETES.
+
+### Storage classes
+
+* Buckets can contain objects of different storage classes
+  1. S3 Standard
+  2. S3 Standard-Infrequent Access - for data that is less frequently accessed but requires rapid access when needed. Availability drops to 99.9% and there is a data retrieval charge of $0.01 / GB.
+  3. S3 One Zone-Infrequent Access - Offers similar performance as other S3 classes but stores data redundantly within an Availability Zone not across Availability Zones.
+  4. Glacier - used for archiving data.
+
 
 # DynamoDB
 
