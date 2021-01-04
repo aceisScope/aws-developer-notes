@@ -546,6 +546,7 @@ SaaS – AWS manages everything except user credentials.
 [Route53 FAQ](https://aws.amazon.com/route53/faqs/)
 
 * Limit of 50 domain names - speak to AWS support to adjust.
+* TTL: DNS records have a TTL (Time to Live) in order for clients to know for how long to caches these values and not overload the DNS with DNS requests.
 
 * CNAME (Canonical Name) can be used to resolve one domain another
 * A Record (Address Record) for resolving a domain name to an IP address
@@ -560,6 +561,7 @@ SaaS – AWS manages everything except user credentials.
 * Latency - used to send traffic to lowest latency region. This requires you to create an A record for each region you want the latency to be evaluated against.
 * Failover - failover allows you to have an active/passive design. Using health checks to assess whether to send traffic to the primary or secondary resource. A health check can use Cloud watch alarms, other health checks or simply use a TCP connection to an IP or domain name.
 * Geolocation - used to send traffic to a particular region based on source location. ie Customers in a Eurozone country always get routed to a server with prices in Euros.
+* Multivalue - distribute DNS responses across multiple resources.Use when associate routing records with a Route 53 health check
 
 # VPC
 
