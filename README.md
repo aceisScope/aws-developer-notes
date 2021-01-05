@@ -622,15 +622,19 @@ SaaS – AWS manages everything except user credentials.
 
 * Content Delivery Network (CDN). Provides content quicker to customers by caching it in edge locations. ie customer 1 watches a video from s3. s3 bucket is in Ireland but user is in Sydney. The content flows Ireland -----> Sydney. CloudFront caches it locally near Sydney so the second time its accessed the content flows, CloudFront Sydney -> Sydney.
 
-* Edge locations can be used for write as well as read.
-
 * Objects are cached for ther life of their TTL. TTL can be 0 seconds to 365 days. Default is 24 hours.
 
-* Origin can be S3, EC2, ELB, Route53 and non AWS server ie on-prem
+* Edge locations can be used for write as well as read.
 
-* Restrict viewer access by signed URL or Signed Cookies
+* Origin can be S3 or Customer Origin (HTTP) such as EC2, ALB, Route53 and non AWS server i.e. on-premise
+    * S3 origin enhanced security with OAI (Origin Access Identify) + S3 bucket policy
 
-* Restrict content based on geo location (whitelist and blacklist)
+* Security
+    * HTTPS
+        * Viewer Protocol Policy: redirect HTTP to HTTPS or HTTPS only
+        * Origin Protocol Policy: HTTPS only or Map Viewer
+    * Restrict viewer access by signed URL (single file) or Signed Cookies (multiple files) for distributing paid content
+    * Restrict content based on geo location (whitelist and blacklist)
 
 # Lambda
 * Compute service allows you to run code without provisioning and managing servers. Under the hood are EC2 Instances managed by AWS.
