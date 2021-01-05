@@ -319,11 +319,7 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 
 * Max object size is 5TB, min object size is 0 bytes. Largest upload in a single PUT is 5GB. (Objects larger than 100MB should be uploaded with multipart uploader)
 * No limit on number of objects in a bucket
-* Versioning needs to be enabled at bucket level. Same key overwrite will increase the version. If it's not enabled, file will be versioned "null".
-
-* If you expect more than 300 PUT/LIST/DELETE requests per second or more than 800 GET request per second raise a support request with AWS to prepare for the workload.
-
-* Event notifications can sent in response to actions such as PUTs, POSTs, COPYs or DELETEs, Messages can be sent through SNS, SQS or Lambda.
+* Versioning needs to be enabled at bucket level. Same key overwrite will increase the version. If it's not enabled, file will be versioned "null". 
 
 ### Encryption
 
@@ -351,14 +347,40 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 
 * S3 provides read-after-write consistency for PUTS of new objects. S3 offers eventual consistency for overwrite PUTS and DELETES.
 
-### Storage classes
+### Advanced
 
-* Buckets can contain objects of different storage classes
-  1. S3 Standard
-  2. S3 Standard-Infrequent Access - for data that is less frequently accessed but requires rapid access when needed. Availability drops to 99.9% and there is a data retrieval charge of $0.01 / GB.
-  3. S3 One Zone-Infrequent Access - Offers similar performance as other S3 classes but stores data redundantly within an Availability Zone not across Availability Zones.
-  4. Glacier - used for archiving data.
+* When versioning is on, S3 MFA-Delete can be enabled. It can only be done by bucket owner via AWS CLI.
+* Access logs for auditing
+* CRR and SRR (Cross and Same region replication) requires proper IAM permission to S3 for copying data
+* Presigned-URL is valid for 3600s, can be changed with `--expires-in` arg.
+* Lifecyle rules can be created for a specific prefix
+    * Transition actions
+    * Expiration actions
 
+#### Storage classes
+1. S3 Standard - General Purpose. E.g. big data analytics, mobile & gaming app, content distribution
+2. S3 Standard - Infrequent Access - for data that is less frequently accessed but requires rapid access when needed. Availability drops to 99.9% and there is a data retrieval charge of $0.01 / GB. E.g. data store for disaster recovery and backups.
+3. S3 One Zone - Infrequent Access - Offers similar performance as other S3 classes but stores data redundantly within an Availability Zone not across Availability Zones. E.g. secondary backup for on-premise data or storing data that can be recreated.
+4. S3 Intelligent Tiering - Automatically moves objects between two tiers based on changing access patterns. 
+5. Glacier - used for archiving data, each item up to 40TB. Minimum storage duration of ***90 days***. 3 retrieval options:
+    * expedited (1 to 5min)
+    * standard (3 to 5 hours)
+    * bulk (5 to 12 hours)
+6. Glacier Deep Archive. Minimum storage duration of ***180 days***.
+    * standard (12 hours)
+    * bulk (48 hours)
+
+### Performance
+* At least 3500 PUT/COPY/POST/DELETE and 5500 GET/HEAD request per second per prefix in a bucket. No limits for the number of prefixes in a bucket. 
+* Note S3 KMS limiation
+* Multipart upload must be used for file > 5GB, recommended for file > 100MB
+* S3 Byte-Range fetches parallize GETs, can be used to speed up downloads
+
+### Event Notifications
+* Event notifications can sent in response to actions such as PUTs, POSTs, COPYs or DELETEs, Messages can be sent through SNS, SQS or Lambda.
+
+### Athena
+* Serverless service to perform analytics directly against S3 files
 
 # DynamoDB
 
