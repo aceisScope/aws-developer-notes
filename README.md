@@ -17,6 +17,8 @@ Table of Contents
 
 * [S3](#S3)
 
+* [ECS](#ECS)
+
 * [DynamoDB](#DynamoDB)
   
 * [SQS](#Simple-Queue-Service-SQS)
@@ -381,6 +383,26 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 
 ### Athena
 * Serverless service to perform analytics directly against S3 files
+
+# ECS
+
+ECS is used to run Docker containers and has 3 flavours:
+  * Classic: provision EC2 instances to run containers onto.
+      * Must configure `/etc/ecs/ecs.config` with the cluster name
+      * EC2 instance must run an ECS agent through EC2 instance profile
+      * ECS tasks can have IAM roles to execute actions against AWS
+  * Fargate: Serverless
+  * EKS: managed Kubernetes
+  
+Use IAMTaskRoles for ECS tasks. Task management strategies: 
+   * binpack: place tasks based on the least available amount of CPU or memory. cost-efficient.
+   * random
+   * spread: place tasks evenly based on the specific value
+   
+Load balancing: When launching a task, don't specify host port but only the container port, and ALB dynamic forwarding will root the traffic to random port, which allows multiple containers of the same type to launch on the same instance
+  
+### ECR
+ECR is used to store Docker images
 
 # DynamoDB
 
