@@ -542,11 +542,17 @@ Domains - workflow and activity types and the workflow execution itself are all 
 
 [Elastic Beanstalk FAQ](https://aws.amazon.com/elasticbeanstalk/faqs/)
 
-* Can have multiple versions of your applications (Dev/Test)
-* Your applications can be split into tiers. Frontend/backend etc
-* able to update application
-* can update your configuration ie change instance type behind the app
-* Updates can be 1 instance at a time or % of instances or immutable
+* Three components: Application, Application version and environment name
+* Deployment Mode: Single instance, HA with LB
+* Deployment options for updates: 
+    * All at once: fastest, but with downtime
+    * rolling: update a few instances at a time, and move onto the next bucket when the previous one is healthy
+    * rolling with additional batches: spin up new instances to move the batch
+    * immutable: spin up new instances in a new ASG, deploy new version to it, and swap all the instances when everything is healthy. longest deployment, rollback quickly.
+* Can have at most 1000 versions. Lifecycle policy: based on time (old versions are removed) or space 
+* Cloning with exactly the same configuration, good for testing
+* Can run the application as a single docker, doesn't use ECS; ECS can run multiple dockers per EC2 instance in EB, requires `Dockerrun.aws.json(v2)` at the root of source code to generate the ECS task definition
+* Worker environment: define a cron.yaml file and offload long-to-complete tasks to a dedicated worker environment
 
 ### Languages
 
