@@ -566,6 +566,39 @@ Domains - workflow and activity types and the workflow execution itself are all 
 * Docker
 * Go
 
+# CI/CD
+
+### CodeCommit
+Notifications: 
+* SNS/Lambda E.g. Deletion of branches, trigger for push in master, notify external build system, trigger Lambda function for code analysis
+* CloudWatch events. E.g. trigger for pull requests, commit comment events, event rules go to SNS topic
+
+### CodePipeline
+Troubleshooting: 
+* state changes happen in CloudWatch events, which can in return create SNS notifications
+* If it fails at a stage, there is info in console
+* CloudTrail can be used to audit API calls
+* If pipleline can't perform an action, make sure the attached IAM Service Role has correct permission
+
+### CodeBuild
+* `buildspec.yaml` must be at the root of the source code
+* Environment variables can be plaintext or secure store
+* Phases: Install -> Pre build -> Build -> Post builds
+* Artifacts uploaded to S3
+* Can cache files to S3 to increase performance for future builds
+* Specify VPC configuration (VPC ID, Subnet ID, Security Group ID) so build can access resources in VPC
+
+### CodeDeploy
+AppSpec:
+* File section
+* Hooks: set of instructions
+    * ApplicationStop
+    * DownloadBundle
+    * BeforeInstall
+    * AfterInstall
+    * ApplicationStart
+    * ***ValidateService***
+
 # CloudFormation
 
 [CloudFormation FAQ](https://aws.amazon.com/cloudformation/faqs/)
