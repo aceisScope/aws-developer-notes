@@ -33,6 +33,8 @@ Table of Contents
 
 * [CloudFormation](#CloudFormation)
 
+* [Monitoring](#monitoring)
+
 * [AWS Shared Responsibility](#AWS-Shared-Responsibility)
 
 * [Route 53](#Route-53)
@@ -617,6 +619,37 @@ Infrastructure as code.
 
 * Stack creation rollback (get deleted) on error is enabled by default. Stack update rollback will reset the stack to the previous state.
 * Use function Fn:GetAtt to output data
+
+# Monitoring
+
+## CloudWatch
+* Metrics: a variable to monitor, belong to namespaces. EC2 details monitoring get metrics every 1 minute instead of 5. Customer high resolution metrics standard is 1 min, can be up to 1 second. To create custom metrics, use API PutMetricData.
+* Alarms: used to trigger notification for metrics. High resolution metric alarm can be trigger at 10 or 30 s.
+* Logs: can go to batch exporter to S3 for archival or stream to ElasticSearch for analysis. Never expire by default, but can define expiration policy at log groups level. Make sure IAM permission correct to send logs to CloudWatch. 
+  * EC2 needs to install a CloudWatch agent to push logs. 
+  * Logs can use filter expressions. Filters only publish metrics data for events after the filter is created.
+* Events: scheduled cron jobs.
+
+### EventBridge
+* Next evolution of CloudWatch Events. Can analyze events in buses and infer the schema via SchemaRegistry.
+
+## X-Ray
+* Visual analysis of application
+* Annotations: used for indexing traces and use with filters
+* Leverages tracing, end-to-end way of following a request
+* Application needs to import the SDK and the instance needs to install the X-Ray daemon or need to enable X-Ray integration.
+   * To make X-Ray work on EC2, ensure IAM role is correct and the daemon is running
+   * To make X-Ray work on Lambda, ensure it has IAM execution role with proper policy (AWSX-RayWriteOnlyAccess) and X-Ray SDK is imported in the code
+* Instrumentation.
+* Sampling rule: by default X-Ray records the first request every second (reservoir) and 5% (rate) of any addtional requests. Customer rules can change the reservoir and the rate.
+* Elastic Beanstalk includes X-Ray daemon. Run by setting `.ebextensions/xray-daemon.config`. Make sure instance profile has the right IAM role and applicaiton code imports X-Ray SDK.
+* X-Ray on ECS, three patterns: 
+  1. As daemon: X-Ray container as a daemon on each instances
+  2. As side-car: X-Ray daemon container alongside each application container
+  3. Fargate claster: side-car
+
+## CloudTrail
+* Provide governance, compliance and audit. Enabled by default
 
 # AWS Shared Responsibility
 
