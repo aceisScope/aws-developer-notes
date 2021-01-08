@@ -605,26 +605,18 @@ AppSpec:
 
 [CloudFormation FAQ](https://aws.amazon.com/cloudformation/faqs/)
 
-A cloudFormation is made up of the following sections:
+Infrastructure as code. 
 
-__Resources__ (required) - specify the stack resources and their properties such as an EC2 instance or a S3 bucket. You can refer to resources in the Resources and Outputs sections of the template.
+* A CloudFormation is made up of the following sections:
+    * __Resources__ (required) - specify the stack resources and their properties such as an EC2 instance or a S3 bucket. You can refer to resources in the Resources and Outputs sections of the template. Resource identifier form:`AWS::aws-product-name::data-type-name`
+    * __Parameters__ (optional) - specifies values that you can pass in to your template at runtime (when you create or update a stack). You can refer to parameters anywhere in the template by leveraging `Fn::Ref`, shorthands is `!Ref` . Useful if resource config is likely to change in the future. 
+    * __Mappings__ (optional) - hardcoded. a mapping of keys and associated values that you can use to specify conditional parameter values, similar to a lookup table. You can match a key to a corresponding value by using the `Fn::FindInMap`, shorthands `!FindInMap [MapName, TopLevelKey, SecondLevelKey]` in the Resources and Outputs section.
+    * __Outputs__ (optional) - describes the values that are returned whenever you view your stack’s properties. For example, you can declare an output for an S3 bucket name and then call the Cloudformation describe-stacks AWS CLI command to view the name. A stack can't be deleted if its outputs is referenced by another stack. To reference the output in another stack, leverage `Fn::ImportValue`.
+    * __Conditions__ (optional) - defines conditions that control whether certain resources are created or whether certain resource properties are assigned a value during stack creation or update. For example, you could conditionally create a resource that depends on whether the stack is for a production or test environment.
+    * __Metadata__ (optional) - objects that provide additional information about the template.
 
-__Metadata__ (optional) - objects that provide additional information about the template.
-
-__Parameters__ (optional) - specifies values that you can pass in to your template at runtime (when you create or update a stack). You can refer to parameters in the Resources and Outputs sections of the template.
-
-__Mappings__ (optional) - a mapping of keys and associated values that you can use to specify conditional parameter values, similar to a lookup table. You can match a key to a corresponding value by using the Fn::FindInMap intrinsic function in the Resources and Outputs section.
-
-__Conditions__ (optional) - defines conditions that control whether certain resources are created or whether certain resource properties are assigned a value during stack creation or update. For example, you could conditionally create a resource that depends on whether the stack is for a production or test environment.
-
-__Transform__ (optional) - for serverless applications (also referred to as Lambda-based applications), specifies the version of the AWS Serverless Application Model (AWS SAM) to use.
-
-__Outputs__ describes the values that are returned whenever you view your stack’s properties. For example, you can declare an output for an S3 bucket name and then call the aws cloudformation describe-stacks AWS CLI command to view the name.
-The only required section in a Cloudformation template is the Resources section
-
-* Automatic rollback on error is enabled by default.
+* Stack creation rollback (get deleted) on error is enabled by default. Stack update rollback will reset the stack to the previous state.
 * Use function Fn:GetAtt to output data
-* Stacks can wait for applications to be provisioned using the 'waitCondition'
 
 # AWS Shared Responsibility
 
