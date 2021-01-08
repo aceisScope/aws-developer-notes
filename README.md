@@ -21,11 +21,7 @@ Table of Contents
 
 * [DynamoDB](#DynamoDB)
   
-* [SQS](#Simple-Queue-Service-SQS)
-
-* [SNS](#SNS)
-
-* [SWF](#SWF)
+* [Messaging](#messaging)
 
 * [Elastic Beanstalk](#Elastic-Beanstalk)
 
@@ -472,7 +468,9 @@ Divide by 2 if eventually consistent
 
 If you exceed your provisioned throughput you will get a HTTP status code 400, ProvisionedThroughputExceededException.
 
-# Simple Queue Service SQS
+# Messaging
+
+## Simple Queue Service SQS
 
 [SQS FAQ](https://aws.amazon.com/sqs/faqs/)
 
@@ -498,7 +496,7 @@ When a consumer receives a message from the SQS queue, it stays in the SQS queue
 
 First 1 million requests are free, then $0.50 for every million after.
 
-# Simple Notification Service (SNS)
+## Simple Notification Service (SNS)
 
 [SNS FAQ](https://aws.amazon.com/sns/faqs/)
 
@@ -525,7 +523,7 @@ Messages can be customised by protocol type.
 
 Messages are stored reduntly across mulitple AZ's.
 
-# Simple Workflow Service (SWF)
+## Simple Workflow Service (SWF)
 
 [SWF FAQ](https://aws.amazon.com/swf/faqs/)
 
@@ -536,7 +534,7 @@ Tasks assigned only once and never duplicated.
 
 Domains - workflow and activity types and the workflow execution itself are all scoped to a domain. Domains isolate a set of types, executions, and task lists from other within the same account. You can register a domain by using the console or SWF API. Using JSON.
 
-## SWF vs SQS
+### SWF vs SQS
 
 * SWF presents task oriented API whereas SQS offers message oriented API.
 * SWF ensures that a task is assigned only once. With SQS you need to handle duplicated messages and may also need to ensure that a message is processed only once.
