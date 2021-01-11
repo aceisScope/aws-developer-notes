@@ -490,12 +490,8 @@ If you exceed your provisioned throughput you will get a HTTP status code 400, P
 * Dead Letter Queue: Can set a threshold of how many times a message can go back to the queue. After the `MaximumReceives` threshold is exceeded, the message goes into a dead letter queue.
 * Delay Queue: delay a message up to 15mins, default is 0s.Can override default value on sending by using `DelaySeconds` param.
 * FIFO queue: exactly-once send capability, maintain ordering. Limited throughput: 300 ms/s without batch, 3000 with.
-  * Deduplication interval is 5mins. Two methods: content-based or explicitly provide a Message Deduplication ID.
-  * MessageGroupID: Each Group ID have a different consumer. Messages in the same group will be in order, but across-group ordering is not guaranteed. 
-
-FIFO queues are not supported in all regions. Currently only: US East (Ohio), US East (N. Virginia), US West (Oregon), and EU (Ireland) regions.
-
-First 1 million requests are free, then $0.50 for every million after.
+  * Deduplication interval is 5mins. Two methods: content-based or explicitly provide a `MessageDeduplicationID`.
+  * MessageGroupID: Each Group ID have a different consumer. Messages in the same group sharing the same `MessageGroupID` will be in order, but across-group ordering is not guaranteed. 
 
 ## Simple Notification Service (SNS)
 
@@ -524,6 +520,10 @@ After a message has been published to a topic it cant be deleted (recalled)
 * Data retention is 1 day by default, up to 7 days
 * Data can't deleted once inserted into Kinesis
 * Put Records: PutRecordAPI + Partition key that gets hashed, same key goes to the same partition
+* ProvisionedThroughputExceededExceptions: sending too much data for one shard. Solution:
+    * Retries with backoff
+    * Increas shards (scaling)
+    * Ensure partition key is a good one
 * KCL: Each shard is read by only one KCL
   
 
