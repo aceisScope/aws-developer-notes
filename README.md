@@ -710,16 +710,28 @@ SaaS – AWS manages everything except user credentials.
     * Restrict content based on geo location (whitelist and blacklist)
 
 # Lambda
-* Compute service allows you to run code without provisioning and managing servers. Under the hood are EC2 Instances managed by AWS.
-
-* Lambda is stateless and event driven. 
-
-* If we increase memory, cpu usage will get increase. Max memory limit is 3008 MBs. Max execution timeouts is 300
+* Compute service allows you to run code without provisioning and managing servers. Under the hood are EC2 Instances managed by AWS. Lambda is stateless and event driven. Up to 15mins excecution time.
+* Three ways of processing events:
+  * Synchronouse Invocation: result is returned right away, error handling happens at client side
+    * With ALB: register Lambda function in a target group. Conversion between ALB <-> Lambda: HTTP <-> JSON. When enabling ALB multi-header values, HTTP headers and query parameters that are sent with multiple values are show as arrays within Lambda event and response objects.
+    * With Lambda@Edge: deploy Lambda alongside CloudFront CDN. Use case: website security and privacy, SEO, etc
+  * Asynchronouse Invocation: Events are placed in an event queue. Lambda retries after error, 3 retries in total. Make sure the process is idempotent. Can define a DLQ for failed processing.
+    * CloudWatch events: CRON / Rate EventBridge Rule (Trigger periodlically) OR CodePipeline / EventBridge Rule (Trigger on state change)
+    * S3 Event notification
+    * Can define destination for successful or failed events
+  * Event Source Mapping: records need to be polled from the source, e.g Kinesis, SQS, DynamoDB. Lambda function in invoked synchronously.
+    * Streams: Kinesis or DynamoDB. Streams for event source mapping. Up to 10 batches per shard.
+    * Queues: SQS & SQS FIFO. Long polling. 
+    * Can define destination for discarded event batches
+* Lambda needs correct Excecution Roles (IAM Roles) to access AWS services. When using event source mapping, Lambda uses the execution role to read event data. An IAM principal can access Lambda if the IAM policy attached to the principal authorizes it OR if the resource-based policy authorizes.
+* Lambda environmental variables: helpful to store secrets
+* Loggin and Monitoring:
+  * CloudWatch Logs: make sure Lambda has an execution role with IAM policy that authorizes writes to CloudWatch logs
+  * X-Ray: Enable `Active Tracing` in config. Make sure Lambda has an execution role with correct IAM policy and env var to communicate with X-Ray
 
 * Temporary objects downloaded by lambda are stored in /tmp directory. 
 
 * Alias can be use to manage different versions for lambda. You can change version behind lambda.
 
-* Use AWS Lambda Environment Variables to pass operational parameters to your function.
 
 * Lambda Optimization Tips: Avoid using recursion, keep deployment size minimum, install only dependecies that is required, keep your function logic outside handler. (source: https://docs.aws.amazon.com/lambda/latest/dg/best-practices.html)
