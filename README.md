@@ -711,6 +711,18 @@ SaaS – AWS manages everything except user credentials.
 
 # Lambda
 * Compute service allows you to run code without provisioning and managing servers. Under the hood are EC2 Instances managed by AWS. Lambda is stateless and event driven. Up to 15mins excecution time.
+* Lambda needs correct Excecution Roles (IAM Roles) to access AWS services. When using event source mapping, Lambda uses the execution role to read event data. An IAM principal can access Lambda if the IAM policy attached to the principal authorizes it OR if the resource-based policy authorizes.
+* Lambda environmental variables: helpful to store secrets
+* Loggin and Monitoring:
+  * CloudWatch Logs: make sure Lambda has an execution role with IAM policy that authorizes writes to CloudWatch logs
+  * X-Ray: Enable `Active Tracing` in config. Make sure Lambda has an execution role with correct IAM policy and env var to communicate with X-Ray
+
+### Performance
+* RAM: from 128M to 3008M in 64M increment. The more RAM added, the more vCPU credits to get. If application is CPU-bound (computational heave), add more RAM.
+* Timeout: default 3s, max is 15min.
+* Execution context: temporary runtime environment that initializes dependencis for Lambda. So intilization code should be outside the function handler and reuse it across executions. It includes `/tmp` directory that can be used to write heavy files, max 512M. For permanent file storage, use S3.
+
+### Invocations
 * Three ways of processing events:
   * Synchronouse Invocation: result is returned right away, error handling happens at client side
     * With ALB: register Lambda function in a target group. Conversion between ALB <-> Lambda: HTTP <-> JSON. When enabling ALB multi-header values, HTTP headers and query parameters that are sent with multiple values are show as arrays within Lambda event and response objects.
@@ -723,13 +735,11 @@ SaaS – AWS manages everything except user credentials.
     * Streams: Kinesis or DynamoDB. Streams for event source mapping. Up to 10 batches per shard.
     * Queues: SQS & SQS FIFO. Long polling. 
     * Can define destination for discarded event batches
-* Lambda needs correct Excecution Roles (IAM Roles) to access AWS services. When using event source mapping, Lambda uses the execution role to read event data. An IAM principal can access Lambda if the IAM policy attached to the principal authorizes it OR if the resource-based policy authorizes.
-* Lambda environmental variables: helpful to store secrets
-* Loggin and Monitoring:
-  * CloudWatch Logs: make sure Lambda has an execution role with IAM policy that authorizes writes to CloudWatch logs
-  * X-Ray: Enable `Active Tracing` in config. Make sure Lambda has an execution role with correct IAM policy and env var to communicate with X-Ray
 
-* Temporary objects downloaded by lambda are stored in /tmp directory. 
+### In VPC
+* By default Lambda is launched outside your own VPC. To access your own VPC, Lambda will create an ENI in the subnets 
+* Deploy Lambda in a public subnet doesn't give it internet access. Deploy Lambda in private subnet with NAT gives it internet access or use VPC endpoints to access AWS services. 
+
 
 * Alias can be use to manage different versions for lambda. You can change version behind lambda.
 
