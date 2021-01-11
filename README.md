@@ -476,23 +476,24 @@ If you exceed your provisioned throughput you will get a HTTP status code 400, P
 
 [SQS tutorial](https://aws.amazon.com/getting-started/tutorials/send-messages-distributed-applications/)
 
-SQS is a pull based messaging service.
+* Queueing works as a buffer to decouple of components of an application. 
+* Unlimited number of messages in the queue. The maximum amount of time that a message can live in a SQS queue is 14 days. The retention period can be configred to be anywhere betweeen 1 minute and 14 days. The default is 4 days. Once the message retention limit is reached, your messages are automatically deleted.
+* Low latency
+* SQS messages must be between 1 and 256 KB in size. To send big message by using SQS Extended Client: send large message to S3 and small metadata message to the queue. 
+* Can have duplicated messages (at least once delivery)
+* Can have out-of-order messages (best offer ordering)
+* Consumer: Poll SQS for messages. When a consumer receives a message from the SQS queue, it stays in the SQS queue. The message must be deleted by the consumer via DeleteMessageAPI once the message has been fully processed. ASG can be used for scaling consumers horizontally.
+* Message Visibility Timeout: To prevent other conumers from receiving the message, SQS sets a Visibility Timeout, which is the period of time when SQS prevents other consumers from receiving and processing the message by making the message invisible to other consumers. By default it's 30s. Can be set via `ChangeMessageVisibility`.
+* Long polling: When a consumer polls messages from a queue but it is empty, it can wait 1-20s for messages to arrive to descrease the number of API calls and latency. It is preferable to short polling. Can be enabled at queue level of using `WaitTimeSeconds`
 
-Allows the 'decoupling' of components of an application.
+### Types
+* Dead Letter Queue: Can set a threshold of how many times a message can go back to the queue. After the `MaximumReceives` threshold is exceeded, the message goes into a dead letter queue.
+* Delay Queue: delay a message up to 15mins, default is 0s.Can override default value on sending by using `DelaySeconds` param.
+* FIFO queue: exactly-once send capability, maintain ordering. Limited throughput: 300 ms/s without batch, 3000 with.
+  * Deduplication interval is 5mins. Two methods: content-based or explicitly provide a Message Deduplication ID.
+  * MessageGroupID: Each Group ID have a different consumer. Messages in the same group will be in order, but across-group ordering is not guaranteed. 
 
 FIFO queues are not supported in all regions. Currently only: US East (Ohio), US East (N. Virginia), US West (Oregon), and EU (Ireland) regions.
-
-The maximum amount of time that a message can live in a SQS queue is 14 days. The retention period can be configred to be anywhere betweeen 1 minute and 14 days. The default is 4 days. Once the message retention limit is reached, your messages are automatically deleted.
-
-SQS messages must be between 1 and 256 KB in size. Billed in 64KB chunks.
-
-SQS supports two types of pull based polling:
-
-**Short polling** - SQS returns a response immediately, even if there is no message in the queue
-**Long polling** - doesn’t return a response until a message arrives in the message queue, or the long poll times out. Can be cheaper then short polling as it can reduce the number of empty receives.
-In almost all cases, long polling is preferable to short polling. One case you might want to use short polling is if you application uses a single thread to poll multiple queues.
-
-When a consumer receives a message from the SQS queue, it stays in the SQS queue. The message must be deleted by the consumer once the message has been fully processed. To prevent other conumers from receiving the message, SQS sets a Visibility Timeout, which is the period of time where SQS prevents other consuming components from receiving and processing the message.
 
 First 1 million requests are free, then $0.50 for every million after.
 
@@ -503,42 +504,28 @@ First 1 million requests are free, then $0.50 for every million after.
 [SNS tutorial](https://aws.amazon.com/getting-started/tutorials/filter-messages-published-to-topics/)
 After a message has been published to a topic it cant be deleted (recalled)
 
-SNS is a messaging service that 'pushes' messages to clients.
+* SNS is a messaging service that 'pushes' messages to clients. Up to 10 million subscriptions per topic, up to 100,000 topics.
+* Messages subscribers:
+  * Application
+  * SMS text message
+  * Email
+  * Email-JSON
+  * AWS SQS
+  * HTTP
+  * HTTPS
+* Fan Out: SNS can be used with SQS to fan messages out to multiple queues. SQS allows for data persistance, delayed processing and retries. Make sure SQS access policy allows SNS to write. Can't be FIFO queue.
 
-Messages protocols:
-
-* Application
-* SMS text message
-* Email
-* Email-JSON
-* AWS SQS
-* HTTP
-* HTTPS
-
-SNS can be used with SQS to fan messages out to multiple queues.
-
-SNS uses Topics to send messages. To receive messages published to a topic you have to subscribe. Once a message is published, SNS attempts to deliver to every endpoint that is subscribed.
-
-Messages can be customised by protocol type.
-
-Messages are stored reduntly across mulitple AZ's.
-
-## Simple Workflow Service (SWF)
-
-[SWF FAQ](https://aws.amazon.com/swf/faqs/)
-
-* Workers are programs that interact with SWF to get tasks, process received tasks and return the results.
-* Decider is a program that controls the coordination of tasks.
-
-Tasks assigned only once and never duplicated.
-
-Domains - workflow and activity types and the workflow execution itself are all scoped to a domain. Domains isolate a set of types, executions, and task lists from other within the same account. You can register a domain by using the console or SWF API. Using JSON.
-
-### SWF vs SQS
-
-* SWF presents task oriented API whereas SQS offers message oriented API.
-* SWF ensures that a task is assigned only once. With SQS you need to handle duplicated messages and may also need to ensure that a message is processed only once.
-* SWF keeps track of all tasks and events in an application. With SQS you need to implement your own application-level tracking.
+## Kinesis
+* A managed alternative to Apache Kafka. 
+  * Kinesis Streams: low latency streaming ingest at scale
+  * Kinesis Analytics: real-time analysis on streams using SQL
+  * Kinesis Firehose: load streams into S3, Redshift, ElasticSearch, ...
+* Streams are devided into shards. ***Records are ordered per shard***. 1MB/s.
+* Data retention is 1 day by default, up to 7 days
+* Data can't deleted once inserted into Kinesis
+* Put Records: PutRecordAPI + Partition key that gets hashed, same key goes to the same partition
+* KCL: Each shard is read by only one KCL
+  
 
 # Elastic Beanstalk
 
