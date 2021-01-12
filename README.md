@@ -408,65 +408,43 @@ ECR is used to store Docker images
 
 [DynamoDB FAQ](https://aws.amazon.com/dynamodb/faqs/)
 
-NoSQL database
-Stored on SSD
-
-Spread across 3 geographically distinct data centres
-
-Consistency models
-
-1. Eventual consistent reads (default). Offers best read performance. Consistency across all copies of data is usually reached within a second.
-2. Strongly consistent reads. Returns a result that reflects all writes that received a successful response prior to the read.
-
-## Indexes
-
-Two types of primary keys available;
-Single Attribute - partition key (Customer no, driver license etc)
-Composite - partition key & sort key (Customer no & date range)
-
-Local Secondary Index
-    same partition key but different sort key
-    Can only be created when creating a table
-
-Global Secondary Index
-    Different partition key and different sort key
-    Can be created at table creation or added later
-
-## Streams
-
-Four options for streams only 1 can be selected
-
-1. Keys Only - Only the key attributes of the modified item
-2. New image the entire item, as it appears after it was modified
-3. Old image - the entire item, as it appeared before it was modified
-4. New and old images - both the new and the old images of the item
-
-* Max 24 hour storage
-* Can have Lambda triggered from streams
-
-If a new item is added to the table, the stream captures an image of the entire item, including all attributes
-if item is updated, stream captures the before and after image of any attributes that were modified
-if item is deleted the stream captures an image of the item before deletion
-
-## Query vs Scan
-
-* Query - a query find items in a table using only the primary key.
-* Scan - a scan operation examines every item in the table. By default a scan returns all of the data attributes for every item. You can use the ProjectionExpression parameter so that Scan only returns some of the attributes.
-
-Query is more efficient than scan
-
-Batch get item for more efficient queries of large items
+* NoSQL database, stored on SSD. HA with replication over 3 AZs.
+* Optimistic locking powered by conditional update / delete
+* Primary Keys: 
+  1. Partition Key only (HASH). Partition key must be unique. E.g. user id.
+  2. Partition Key + Sort Key. The combination must be unique. Data is grouped by partition key.
+* [DynamoDB APIs](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/Welcome.html)
+  * Query - a query find items in a table using only the primary key (sort key is optional). Query is more efficient than scan. 
+  * Scan - a scan operation examines every item in the table. By default a scan returns all of the data attributes for every item. You can use the  `ProjectionExpression + FilterExpression` parameter so that Scan only returns some of the attributes. For faster performance,use parallel scans.
+* TTL: automatically delete an item after expiry time
+* CLI:
+  * `--projection-expression`: attributes to retrieve
+  * `--filter-expression`: filter results
+  * `--page-size`: full dataset is retrieved but each API call will request less data (help avoid timeout)
+  * `--max-times` and`--starting-token`: pagination
 
 ### Provisioned Throughput
+* DynamoDB tables must be have provisioned RCUs and WCUs. If you exceed your provisioned throughput you will get a HTTP status code 400, `ProvisionedThroughputExceededException`.
+* WCU (Write Capacity Units): one write per second for an item up to 1KB. If an item is bigger, more WCUs are consumed.
+* Reads: 
+  * Read consistency:
+    1. Eventual consistent reads (default). Offers best read performance. Consistency across all copies of data is usually reached within a second.
+    2. Strongly consistent reads. Returns a result that reflects all writes that received a successful response prior to the read.
+  * RCUs: one strongly consistent read per second, or two eventually consistent reads per second, for an item up to 4KB.
+* DAX: cache, solves the hot key problems (too many reads)
 
-DynamoDB is priced on the storage size and its 'Provisioned Throughput'. Provisioned throughput is made up of read capacity units and write capacity units.
-All reads rounded up to 4KB. Eventually consistent reads (default) consists of 2 reads per second. Strongly consistent reads consist of 1 read per second.
-All writes are 1KB. All writes consist of 1 write per second.
+### Indexes
+* Local Secondary Index: same partition key but different sort key (local to the hash key). Must be defined when creating a table.
+* Global Secondary Index: Different partition key and different sort key (whole new different table). Can be created at table creation or added later. If writes are throttled on GSI, the main table will be throttled.  
 
-Formula is (size of read rounded to 4KB chunk / 4KB) * no of items = read throughput
-Divide by 2 if eventually consistent
-
-If you exceed your provisioned throughput you will get a HTTP status code 400, ProvisionedThroughputExceededException.
+### Streams
+* Changes in DynamoDB (CREATE, UPDATE, DELETE). Max 24 hour retention. Can be read by EC2 or Lambda. Could be used to implement cross-region replication.
+* Four options for streams only 1 can be selected
+  1. Keys Only - Only the key attributes of the modified item
+  2. New image the entire item, as it appears after it was modified
+  3. Old image - the entire item, as it appeared before it was modified
+  4. New and old images - both the new and the old images of the item
+* Records are not retroactively populated in a stream after enabling it
 
 # Messaging
 
