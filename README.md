@@ -716,11 +716,20 @@ SaaS – AWS manages everything except user credentials.
 * Loggin and Monitoring:
   * CloudWatch Logs: make sure Lambda has an execution role with IAM policy that authorizes writes to CloudWatch logs
   * X-Ray: Enable `Active Tracing` in config. Make sure Lambda has an execution role with correct IAM policy and env var to communicate with X-Ray
+* External dependencies need to be install with the code and zip together. If zip file is less than 50M then directly to Lambda, else to S3
 
 ### Performance
 * RAM: from 128M to 3008M in 64M increment. The more RAM added, the more vCPU credits to get. If application is CPU-bound (computational heave), add more RAM.
 * Timeout: default 3s, max is 15min.
 * Execution context: temporary runtime environment that initializes dependencis for Lambda. So intilization code should be outside the function handler and reuse it across executions. It includes `/tmp` directory that can be used to write heavy files, max 512M. For permanent file storage, use S3.
+
+### Concurrency
+* Up to 1000 concurrent excecutions per account. Set a reserved concurrency to limit this number. Each invocation over the concurrency will trigger a throttle.
+* If one application invokes too many concurrent Lambda functions, it may throttle other applications' Lambda functions.
+* Asychronous Invocations: if Lambda doesn't have enough concurrency available, additional requests are throttled, events are returned to the internal event queue.
+* Cold start: when lauching a new instance, the initialization stage when code is loaded and code outside the handler run. First request has longer latency than the rest. Provisioned concurrency can be allocated before the function is invoked.
+* Alias can be use to manage different versions for Lambda. They are mutable.
+* Lambda Optimization Tips: Avoid using recursion, keep deployment size minimum, install only dependecies that is required, keep your function logic outside handler. (source: https://docs.aws.amazon.com/lambda/latest/dg/best-practices.html)
 
 ### Invocations
 * Three ways of processing events:
@@ -740,8 +749,15 @@ SaaS – AWS manages everything except user credentials.
 * By default Lambda is launched outside your own VPC. To access your own VPC, Lambda will create an ENI in the subnets 
 * Deploy Lambda in a public subnet doesn't give it internet access. Deploy Lambda in private subnet with NAT gives it internet access or use VPC endpoints to access AWS services. 
 
-
-* Alias can be use to manage different versions for lambda. You can change version behind lambda.
-
-
-* Lambda Optimization Tips: Avoid using recursion, keep deployment size minimum, install only dependecies that is required, keep your function logic outside handler. (source: https://docs.aws.amazon.com/lambda/latest/dg/best-practices.html)
+### Limits
+* Exceutions:
+  * Memory 128M to 3008M in 64M increment
+  * Max execution time: 15min
+  * Environmental Variables: 4K
+  * Disk capacity in `/tmp`: 512M
+  * Concurrency: up to 1000
+* Deployment: 
+  * compressed.zip size: 50M
+  * uncompressed (code + dependencies): 250M
+  * Can use /tmp directory to load other files at startup
+  * Environmental Variables: 4K
