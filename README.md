@@ -739,3 +739,33 @@ SaaS – AWS manages everything except user credentials.
   * uncompressed (code + dependencies): 250M
   * Can use /tmp directory to load other files at startup
   * Environmental Variables: 4K
+  
+  
+# API Gateway
+* CORS can be enabled at API Gateway
+* Endpoint types: 
+  * Edge-optimized: for global clients
+  * Regional
+  * Private
+* Stage variables: like environmental variables for API stages. Use them to manage often changing config values. They are passed to context object in Lambda. E.g. stage variables to indicate Lambda alias.
+* Canary depployment: choose % of the traffic the canary channel receives
+* Integration types:
+  * MOCK: return a response without sending request to backend
+  * HTTP/AWS: must configure both integration request and response. Setup data mapping using mapping templates.
+    * Mapping templates: can be used to modify request/response. Like query strings, body content, headers. E.g. JSON to XML with SOAP
+  * AWS_PROXY: incoming request from the client is the input to Lambda. No mapping templates, header, ... they are passed as arguments
+  * HTTP_PROXY: HTTP request is passed to backend, no mapping template
+* Caching: default TTL 300s. 0 - 3600s. Can be defined per stage. To invalidate cache, client sends header `Cache-Control: max-age=0` with proper IAM authorization
+* CloudWatch metrics: 
+  * `CacheHitCount` and `CacheMissCount`: efficiency of the cache
+  * `Count`: total number of API requests
+  * `IntegrationLatency`: between API Gateway relays a request to the backend and backend response  
+  * `Latency`: between API Gateway receives request from client to it returns response to client 
+* Limits:
+  * Max time to perform request: 29s
+  * Throttles at 10000 request/s, returns 429 error. Can set Stage Limit & Method Limit to improve performance
+* Security:
+  * IAM Permission: Sig V4 header. Authentication = IAM | Authorization = IAM Policy. Resource Policies can be used for cross-account access. 
+  * Cognito user tools: pass token. Cognito user tools. Authentication = Cognito User Pools | Authorization = API Gateway Methods
+  * Lambda authorizer: request parameter-based token authorizer. Authentication = External | Authorization = Lambda function.
+
