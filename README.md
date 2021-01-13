@@ -41,6 +41,8 @@ Table of Contents
 
 * [Lambda](#Lambda)
 
+* [API Gateway](#api-gateway)
+
 [Exam Blueprint](http://awstrainingandcertification.s3.amazonaws.com/production/AWS_certified_developer_associate_blueprint.pdf)
 
 # AWS-Services
