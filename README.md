@@ -187,23 +187,12 @@ Workspaces - VDI
 # IAM
 
 [IAM FAQ](https://aws.amazon.com/iam/faqs/)
-
-Users
-Users have the choice of being given access to the management console and/or programmatic access. Access via the management console enables a password for the account. Enabling programmatic access enables an access key ID and secret access key. This can be used to access t
-
-### Groups
-
-Groups allow you to apply policies to multiple users. Recommended to apply policies to groups even if it is for one user.
-
-* Users can be members of multiple groups
-* Groups cannot be nested
-
-Policies
-Policies are JSON documents that contain permissions to AWS services. ie
-
-Roles
-
-Secret
+* Users: A physical person. Users have the choice of being given access to the management console and/or programmatic access. Access via the management console enables a password for the account. Enabling programmatic access enables an access key ID and secret access key. 
+* Groups: Funtions and teams. Groups allow you to apply policies to multiple users. Recommended to apply policies to groups even if it is for one user.
+  * Users can be members of multiple groups
+  * Groups cannot be nested
+* Roles: Internal usage within AWS resources.
+* Policies: Policies are JSON documents that contain permissions to AWS services. ie Roles and secrets
 
 ## Security Token Service (STS)
 
