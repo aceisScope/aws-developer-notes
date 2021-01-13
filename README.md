@@ -219,6 +219,12 @@ Secret
 
 ### Active Directory Federation
 
+# Cognito
+Comparing to IAM, Cognito is for "hundreds of users", "mobile users", "Social Identity Provider" like Google or "SAML users"
+* Cognito User Pools: "Manage user and password". create a serverless database for application users. Integrate with API Gateway and ALB
+  * Can invoke Lambda function on some triggers like authentication events, sign-up, messages or token creation
+* Cognito Identity Pools (Federated Identities): "Access AWS services". get identitier for "users" so they obtain temporary AWS credentials, users then can access AWS services directly or through API Gateway. IAM credentials are obtained via STS. You can partition user access using ***policy variables***.
+
 # EC2
 
 [EC2 FAQ](https://aws.amazon.com/ec2/faqs/)
