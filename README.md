@@ -193,20 +193,19 @@ Workspaces - VDI
   * Groups cannot be nested
 * Roles: Internal usage within AWS resources.
 * Policies: Policies are JSON documents that contain permissions to AWS services. ie Roles and secrets
+* To configure many AWS services, must ***pass*** an IAM role to the service during setup. For this, need action `iam:PassRole`.
 
-## Security Token Service (STS)
+##$ Security Token Service (STS)
 
-* Grants users limited and temporary access to AWS resources.
-* 3 sources:
-    1. Federation (often Active Directory)
-        * Uses SAML
-        * SSO allows users to log in to AWS Console without assigning IAM credentials
-    2. Federation with mobile app
-        * Use Facebook/Amazon/Google or other openID provider
-    3. Cross account access
-        * Lets users from one AWS account access resources in another
+* Assume a role: define an IAM role with or cross-account and which principles can acess this role, use AssumeRole API to impersonate this role with temporary credentials fro 15 mins to 1 h.
+  * MFA: Use GetSessionToken API to get a session token after MFA, need to set appropriate IAM policy with IAM conditions, set `aws::MultiFactorAuth::true` 
 
 ### Active Directory Federation
+* AD: Database of objects, centralized security management on Window Servers with AD Domain Services.
+* AWS Directory Services:
+  * AWS Managed Microsoft AD: create own AD on AWS, establish "trust" connections with on-premise AD
+  * AD Connector: Directory Gateway (proxy) to redirect to on-premise AD, users are managed solely on-premise
+  * Simple AD: AD-compatible managed by AWS, can't be joined with on-premise AD
 
 # Cognito
 Comparing to IAM, Cognito is for "hundreds of users", "mobile users", "Social Identity Provider" like Google or "SAML users"
@@ -333,7 +332,7 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 
 ### Security
 
-* If user IAM allows or resource policy ALLOWs, an IAM principal can access an S3 object. Unless there's an explicit DENY in IAM policy.
+* If user IAM allows or resource policy ALLOWs, an IAM principal can access an S3 object. Unless there's an explicit DENY in IAM policy. `Total Policy = IAM policy + S3 Bucket Policy`
 * Bucket policy: JSON based. ALLOW / DENY.
 * Bucket settings for blocking public access to prevent data leaks
 
