@@ -9,6 +9,8 @@ Table of Contents
 
 * [IAM](#iam)
 
+* [Security and Encryption](#security-and-encryption)
+
 * [EC2](#EC2)
 
 * [EBS & EFS](#ebs--efs)
@@ -195,7 +197,7 @@ Workspaces - VDI
 * Policies: Policies are JSON documents that contain permissions to AWS services. ie Roles and secrets
 * To configure many AWS services, must ***pass*** an IAM role to the service during setup. For this, need action `iam:PassRole`.
 
-##$ Security Token Service (STS)
+### Security Token Service (STS)
 
 * Assume a role: define an IAM role with or cross-account and which principles can acess this role, use AssumeRole API to impersonate this role with temporary credentials fro 15 mins to 1 h.
   * MFA: Use GetSessionToken API to get a session token after MFA, need to set appropriate IAM policy with IAM conditions, set `aws::MultiFactorAuth::true` 
@@ -206,12 +208,24 @@ Workspaces - VDI
   * AWS Managed Microsoft AD: create own AD on AWS, establish "trust" connections with on-premise AD
   * AD Connector: Directory Gateway (proxy) to redirect to on-premise AD, users are managed solely on-premise
   * Simple AD: AD-compatible managed by AWS, can't be joined with on-premise AD
-
-# Cognito
+  
+## Cognito
 Comparing to IAM, Cognito is for "hundreds of users", "mobile users", "Social Identity Provider" like Google or "SAML users"
 * Cognito User Pools: "Manage user and password". create a serverless database for application users. Integrate with API Gateway and ALB
   * Can invoke Lambda function on some triggers like authentication events, sign-up, messages or token creation
 * Cognito Identity Pools (Federated Identities): "Access AWS services". get identitier for "users" so they obtain temporary AWS credentials, users then can access AWS services directly or through API Gateway. IAM credentials are obtained via STS. You can partition user access using ***policy variables***.
+  
+# Security and Encryption
+### KMS
+* Key Management Service managed by AWS. Keys are bound to region. 
+  * Cusomter Master Keys: AES-256 or RSA & ECC. Three types: AWS default, user keys created in KMS and user keys imported
+* Envelope Encryption: KMS Encrypt API has a limit for 4K, to encrypt > 4K need to use Envelope Encryption `GenerateDataKey` API
+* All cryptographic operations shall the same quota. Over the quota will get `ThrottlingException`
+* CloudWatch logs can be encrypted with KMS keys: `associate-kms-key` and `create-log-group` API to associate a CMK with a log group
+
+### Secrets Store
+* SSM Parameter Store: secure storage for configuration and secrets. KMS is optional. 
+* Secret Manager: store secrets, capability to force totation of secrects every X days. Integration with RDS. KMS is mandatory. 
 
 # EC2
 
@@ -334,6 +348,8 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 
 * If user IAM allows or resource policy ALLOWs, an IAM principal can access an S3 object. Unless there's an explicit DENY in IAM policy. `Total Policy = IAM policy + S3 Bucket Policy`
 * Bucket policy: JSON based. ALLOW / DENY.
+  * To force SSL, create a bucket policy with DENY on `aws:SecureTransport=false`
+  * To force SSE-KMS encryption: DENY incorrect encryption header, make sure it includes `asw:kms` and DENY no encryption header
 * Bucket settings for blocking public access to prevent data leaks
 
 ### Websites
@@ -764,4 +780,3 @@ SaaS – AWS manages everything except user credentials.
   * IAM Permission: Sig V4 header. Authentication = IAM | Authorization = IAM Policy. Resource Policies can be used for cross-account access. 
   * Cognito user tools: pass token. Cognito user tools. Authentication = Cognito User Pools | Authorization = API Gateway Methods
   * Lambda authorizer: request parameter-based token authorizer. Authentication = External | Authorization = Lambda function.
-
