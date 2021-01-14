@@ -199,7 +199,7 @@ Workspaces - VDI
 
 ### Security Token Service (STS)
 
-* Assume a role: define an IAM role with or cross-account and which principles can acess this role, use AssumeRole API to impersonate this role with temporary credentials fro 15 mins to 1 h.
+* Assume a role: define an IAM role with or cross-account and which principles can acess this role, use AssumeRole API to impersonate this role with temporary credentials fro 15 mins to 1 h. *Example: The development team at a retail organization wants to allow a Lambda function in its AWS Account A to access a DynamoDB table in another AWS Account B. Create an IAM role in Account B with access to DynamoDB. Modify the trust policy of the role in Account B to allow the execution role of Lambda to assume this role. Update the Lambda function code to add the AssumeRole API call.*
   * MFA: Use GetSessionToken API to get a session token after MFA, need to set appropriate IAM policy with IAM conditions, set `aws::MultiFactorAuth::true` 
 
 ### Active Directory Federation
@@ -224,7 +224,7 @@ Comparing to IAM, Cognito is for "hundreds of users", "mobile users", "Social Id
 * CloudWatch logs can be encrypted with KMS keys: `associate-kms-key` and `create-log-group` API to associate a CMK with a log group
 
 ### Secrets Store
-* SSM Parameter Store: secure storage for configuration and secrets. KMS is optional. 
+* SSM Parameter Store: secure storage for configuration and secrets. Can create secure string parameters, which are parameters that have a plaintext parameter name and an encrypted parameter value. KMS is optional. 
 * Secret Manager: store secrets, capability to force totation of secrects every X days. Integration with RDS. KMS is mandatory. 
 
 # EC2
@@ -241,13 +241,14 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 
     1. Application - Layer 7, target groups (based on path, hostname, query string), TLS termination 
           1. Target Groups: EC2, ECS, Lambda, IP
-          2. True client IP address is in X-Forwarded-For
+          2. True client IP address is in `X-Forwarded-For`
     2. Network - Extermeme performance and static IP
     3. Classic (also refered to as Elastic Load Balancer ELB) - Layer 4 & 7, Fixed hostname
 
 * Sticky sessions are a mechanism to route requests to the same target in a target group. This is useful for servers that maintain state information in order to provide a continuous experience to clients.
 * Cross zone load balancing: always on for ALB, disabled by default for NLB
 * SNI to load multiple SSL certs to servce multple websites on one server on ALB and NLB
+* HTTPS listener: to offload the work of encryption and decryption to your load balancer so that your applications can focus on their business logic. Must deploy at least one SSL server certificate on the listener.
 
 ## Auto Scaling Groups
 
@@ -352,7 +353,7 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
   * To force SSE-KMS encryption: DENY incorrect encryption header, make sure it includes `asw:kms` and DENY no encryption header
 * Bucket settings for blocking public access to prevent data leaks
 
-### Websites
+### Static Websites
 
 * S3 cab host static websites `<bucket-name>.s3-website.<AWS-region>.com`. Neet to make bucket policy allow public reads otherwise will get 403.
 * CORS (Cross-Origin resource sharing) enables a way for client web applications loaded in one domain to interact with resources in a different domain. If a client does a cross-origin request on S3 bucket, we need to enable correct CORS headers `"AllowOrigins":<First-bucket-name>` on the cross origin bucket.
@@ -397,21 +398,19 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 * Serverless service to perform analytics directly against S3 files
 
 # ECS
-
-ECS is used to run Docker containers and has 3 flavours:
+* ECS is used to run Docker containers and has 3 flavours:
   * Classic: provision EC2 instances to run containers onto.
       * Must configure `/etc/ecs/ecs.config` with the cluster name
       * EC2 instance must run an ECS agent through EC2 instance profile
       * ECS tasks can have IAM roles to execute actions against AWS
   * Fargate: Serverless
   * EKS: managed Kubernetes
-  
-Use IAMTaskRoles for ECS tasks. Task management strategies: 
+* Use IAMTaskRoles for ECS tasks. Task management strategies: 
    * binpack: place tasks based on the least available amount of CPU or memory. cost-efficient.
    * random
    * spread: place tasks evenly based on the specific value
-   
-Load balancing: When launching a task, don't specify host port but only the container port, and ALB dynamic forwarding will root the traffic to random port, which allows multiple containers of the same type to launch on the same instance
+* Load balancing: When launching a task, don't specify host port but only the container port, and ALB dynamic forwarding will root the traffic to random port, which allows multiple containers of the same type to launch on the same instance
+* Deregistering: If terminate a container instance in the RUNNING state, that container instance is automatically removed from the cluster. However if terminate a container instance in the STOPPED state, that container instance isn't automatically removed from the cluster.
   
 ### ECR
 ECR is used to store Docker images
@@ -443,7 +442,12 @@ ECR is used to store Docker images
     1. Eventual consistent reads (default). Offers best read performance. Consistency across all copies of data is usually reached within a second.
     2. Strongly consistent reads. Returns a result that reflects all writes that received a successful response prior to the read.
   * RCUs: one strongly consistent read per second, or two eventually consistent reads per second, for an item up to 4KB.
-* DAX: cache, solves the hot key problems (too many reads)
+* [HA resolutions](https://aws.amazon.com/premiumsupport/knowledge-center/dynamodb-high-latency/):
+  * DAX: cache, solves the hot key problems (too many reads)
+  * Global tables: reduce the distance between the client and the DynamoDB endpoint
+  * Use eventually consistent reads
+  * Reduce the request timeout settings: `requestTimeOut` and `clientExecutionTimeout`
+  * Send constant traffic or reuse connections
 
 ### Indexes
 * Local Secondary Index: same partition key but different sort key (local to the hash key). Must be defined when creating a table.
@@ -469,7 +473,7 @@ ECR is used to store Docker images
 * Queueing works as a buffer to decouple of components of an application. 
 * Unlimited number of messages in the queue. The maximum amount of time that a message can live in a SQS queue is 14 days. The retention period can be configred to be anywhere betweeen 1 minute and 14 days. The default is 4 days. Once the message retention limit is reached, your messages are automatically deleted.
 * Low latency
-* SQS messages must be between 1 and 256 KB in size. To send big message by using SQS Extended Client: send large message to S3 and small metadata message to the queue. 
+* SQS messages must be between 1 and ***256 KB*** in size. To send big message by using SQS Extended Client: send large message to S3 and small metadata message to the queue. 
 * Can have duplicated messages (at least once delivery)
 * Can have out-of-order messages (best offer ordering)
 * Consumer: Poll SQS for messages. When a consumer receives a message from the SQS queue, it stays in the SQS queue. The message must be deleted by the consumer via DeleteMessageAPI once the message has been fully processed. ASG can be used for scaling consumers horizontally.
@@ -529,7 +533,7 @@ After a message has been published to a topic it cant be deleted (recalled)
     * rolling with additional batches: spin up new instances to move the batch
     * immutable: spin up new instances in a new ASG, deploy new version to it, and swap all the instances when everything is healthy. longest deployment, rollback quickly.
 * Can have at most 1000 versions. Lifecycle policy: based on time (old versions are removed) or space 
-* Cloning with exactly the same configuration, good for testing
+* Cloning with exactly the same configuration, good for testing. **Migration** cross-account: Create a saved configuration in Team A's account and download it to local machine. Make the account-specific parameter changes and upload to the S3 bucket in Team B's account. From Elastic Beanstalk console, create an application from the saved Configurations.
 * Can run the application as a single docker, doesn't use ECS; ECS can run multiple dockers per EC2 instance in EB, requires `Dockerrun.aws.json(v2)` at the root of source code to generate the ECS task definition
 * Worker environment: define a cron.yaml file and offload long-to-complete tasks to a dedicated worker environment
 
@@ -568,15 +572,21 @@ Troubleshooting:
 * Specify VPC configuration (VPC ID, Subnet ID, Security Group ID) so build can access resources in VPC
 
 ### CodeDeploy
-AppSpec:
-* File section
-* Hooks: set of instructions
-    * ApplicationStop
-    * DownloadBundle
-    * BeforeInstall
-    * AfterInstall
-    * ApplicationStart
-    * ***ValidateService***
+* Deployment groups: in an EC2/On-Premises deployment, a deployment group is a set of individual instances targeted for deployment. 
+* Deployment: 
+  * In-place deployment: The application on each instance in the deployment group is stopped, the latest application revision is installed, and the new version of the application is started and validated
+  * Blue/green deployment: Povision a new set of instances to install the latest version of the application. CodeDeploy then re-routes load balancer traffic from an existing set of instances running the previous version of the application to the new set of instances running the latest version and then terminate the old instances
+* AppSpec:
+  * File section
+  * Hooks: set of instructions to manage deployment
+      * ApplicationStop
+      * DownloadBundle
+      * BeforeInstall
+      * AfterInstall
+      * ApplicationStart
+      * ***ValidateService***
+ * [Rollback](https://docs.aws.amazon.com/codedeploy/latest/userguide/deployments-rollback-and-redeploy.html): roll back deployments by redeploying a previously deployed revision of an application as a new deployment on the failed instances
+ 
 
 # CloudFormation
 
@@ -585,7 +595,7 @@ AppSpec:
 Infrastructure as code. 
 
 * A CloudFormation is made up of the following sections:
-    * __Resources__ (required) - specify the stack resources and their properties such as an EC2 instance or a S3 bucket. You can refer to resources in the Resources and Outputs sections of the template. Resource identifier form:`AWS::aws-product-name::data-type-name`
+    * __Resources__ (required) - specify the stack resources and their properties such as an EC2 instance or a S3 bucket. You can refer to resources in the Resources and Outputs sections of the template. Resource identifier form:`AWS::aws-product-name::data-type-name`. !GetAtt returns the value of an attribute from a resource in the template e.g. `!GetAtt logicalNameOfResource.attributeName`
     * __Parameters__ (optional) - specifies values that you can pass in to your template at runtime (when you create or update a stack). You can refer to parameters anywhere in the template by leveraging `Fn::Ref`, shorthands is `!Ref` . Useful if resource config is likely to change in the future. 
     * __Mappings__ (optional) - hardcoded. a mapping of keys and associated values that you can use to specify conditional parameter values, similar to a lookup table. You can match a key to a corresponding value by using the `Fn::FindInMap`, shorthands `!FindInMap [MapName, TopLevelKey, SecondLevelKey]` in the Resources and Outputs section.
     * __Outputs__ (optional) - describes the values that are returned whenever you view your stack’s properties. For example, you can declare an output for an S3 bucket name and then call the Cloudformation describe-stacks AWS CLI command to view the name. A stack can't be deleted if its outputs is referenced by another stack. To reference the output in another stack, leverage `Fn::ImportValue`.
@@ -707,6 +717,7 @@ SaaS – AWS manages everything except user credentials.
   * CloudWatch Logs: make sure Lambda has an execution role with IAM policy that authorizes writes to CloudWatch logs
   * X-Ray: Enable `Active Tracing` in config. Make sure Lambda has an execution role with correct IAM policy and env var to communicate with X-Ray
 * External dependencies need to be install with the code and zip together. If zip file is less than 50M then directly to Lambda, else to S3
+* Alias can be use to manage different versions for Lambda. They are mutable.
 
 ### Performance
 * RAM: from 128M to 3008M in 64M increment. The more RAM added, the more vCPU credits to get. If application is CPU-bound (computational heave), add more RAM.
@@ -714,11 +725,11 @@ SaaS – AWS manages everything except user credentials.
 * Execution context: temporary runtime environment that initializes dependencis for Lambda. So intilization code should be outside the function handler and reuse it across executions. It includes `/tmp` directory that can be used to write heavy files, max 512M. For permanent file storage, use S3.
 
 ### Concurrency
-* Up to 1000 concurrent excecutions per account. Set a reserved concurrency to limit this number. Each invocation over the concurrency will trigger a throttle.
+* Up to 1000 concurrent excecutions per account. Set a **reserved concurrency** to limit this number. Each invocation over the concurrency will trigger a throttle.
+* Set **provisioned concurrency** to enable your function to scale without fluctuations in latency
 * If one application invokes too many concurrent Lambda functions, it may throttle other applications' Lambda functions.
 * Asychronous Invocations: if Lambda doesn't have enough concurrency available, additional requests are throttled, events are returned to the internal event queue.
 * Cold start: when lauching a new instance, the initialization stage when code is loaded and code outside the handler run. First request has longer latency than the rest. Provisioned concurrency can be allocated before the function is invoked.
-* Alias can be use to manage different versions for Lambda. They are mutable.
 * Lambda Optimization Tips: Avoid using recursion, keep deployment size minimum, install only dependecies that is required, keep your function logic outside handler. (source: https://docs.aws.amazon.com/lambda/latest/dg/best-practices.html)
 
 ### Invocations
