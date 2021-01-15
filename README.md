@@ -244,14 +244,15 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
           2. True client IP address is in `X-Forwarded-For`
     2. Network - Extermeme performance and static IP
     3. Classic (also refered to as Elastic Load Balancer ELB) - Layer 4 & 7, Fixed hostname
+      *  By default, the health check configuration of your Auto Scaling group is set as an EC2 type that performs a status check of EC2 instances. To automate the replacement of unhealthy EC2 instances, you must change the health check type of your instance's Auto Scaling group from EC2 to ELB by using a configuration file. See [here](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environmentconfig-autoscaling-healthchecktype.html)
 
 * Sticky sessions are a mechanism to route requests to the same target in a target group. This is useful for servers that maintain state information in order to provide a continuous experience to clients.
 * Cross zone load balancing: always on for ALB, disabled by default for NLB
 * SNI to load multiple SSL certs to servce multple websites on one server on ALB and NLB
-* HTTPS listener: to offload the work of encryption and decryption to your load balancer so that your applications can focus on their business logic. Must deploy at least one SSL server certificate on the listener.
+* HTTPS listener: to offload the work of encryption and decryption to your load balancer so that your applications can focus on their business logic. Must deploy at least one SSL server certificate on the listener. Application Load Balancer can be used to securely authenticate users for accessing applications via HTTP listener and Cognito User Pools, see [here](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html).
 
 ## Auto Scaling Groups
-
+* Cross AZ, but regional
 * [Scaling policies: target tracking, simple/step, schedule action](https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scale-based-on-demand.html#as-scaling-types)
 * [Cooldowns](https://docs.aws.amazon.com/autoscaling/ec2/userguide/Cooldown.html)
 
@@ -267,7 +268,12 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
     * HDD: 
       * STI: throughput optimized, streaming workload, e.g. Apache Kafka
       * SCI: lowest cost
-      
+* Encryption types:
+  1. Data at rest inside the volume
+  2. All data moving between the volume and the instance
+  3. All snapshots created from the volume
+  4. All volumes created from those snapshots
+
 ## Instance Store
 
 * Physically attached disk, very high IOPS (100k ~ millions), can't be increased in size, ***data lost on stop or termination***. e.g. High-performance cache.
@@ -324,7 +330,10 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
     * Redis: Multi AZ, Read replicas, Data Durability with AOF, backup and restore
     * memcached: sharding, non persistence, no backup or restore, multi-threaded
 * Multi AZ
-* [Strategies](https://aws.amazon.com/caching/best-practices/): Lazy loading, Write through, Time-to-live, Evictions
+* [Strategies](https://aws.amazon.com/caching/best-practices/): 
+  * Lazy loading: loads data into the cache only when necessary
+  * Write through: adds data or updates data in the cache whenever data is written to the database
+  * Time-to-live
 
 # S3
 
@@ -352,25 +361,30 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
   * To force SSL, create a bucket policy with DENY on `aws:SecureTransport=false`
   * To force SSE-KMS encryption: DENY incorrect encryption header, make sure it includes `asw:kms` and DENY no encryption header
 * Bucket settings for blocking public access to prevent data leaks
+* Managing access examples:
+  * [Bucket owner granting its users bucket permissions](https://docs.aws.amazon.com/AmazonS3/latest/dev/example-walkthroughs-managing-access-example1.html)
+  * [Bucket owner granting cross-account bucket permissions](https://docs.aws.amazon.com/AmazonS3/latest/dev/example-walkthroughs-managing-access-example2.html)
+  * [Bucket owner granting its users permissions to objects it does not own](https://docs.aws.amazon.com/AmazonS3/latest/dev/example-walkthroughs-managing-access-example3.html)
+  * [Bucket owner granting cross-account permission to objects it does not own](https://docs.aws.amazon.com/AmazonS3/latest/dev/example-walkthroughs-managing-access-example4.html)
+
 
 ### Static Websites
 
 * S3 cab host static websites `<bucket-name>.s3-website.<AWS-region>.com`. Neet to make bucket policy allow public reads otherwise will get 403.
 * CORS (Cross-Origin resource sharing) enables a way for client web applications loaded in one domain to interact with resources in a different domain. If a client does a cross-origin request on S3 bucket, we need to enable correct CORS headers `"AllowOrigins":<First-bucket-name>` on the cross origin bucket.
 
-### Consistency Model
-
-* S3 provides read-after-write consistency for PUTS of new objects. S3 offers eventual consistency for overwrite PUTS and DELETES.
-
 ### Advanced
 
+* S3 provides read-after-write consistency for PUTS of new objects. S3 offers eventual consistency for overwrite PUTS and DELETES.
 * When versioning is on, S3 MFA-Delete can be enabled. It can only be done by bucket owner via AWS CLI.
-* Access logs for auditing
+* Access logs for auditing. Don't set logging bucket to be the monitored bucket. 
 * CRR and SRR (Cross and Same region replication) requires proper IAM permission to S3 for copying data
 * Presigned-URL is valid for 3600s, can be changed with `--expires-in` arg.
 * Lifecyle rules can be created for a specific prefix
     * Transition actions
     * Expiration actions
+* Event notifications can sent in response to actions such as PUTs, POSTs, COPYs or DELETEs, Messages can be sent through SNS, SQS or Lambda. 
+  * If two writes are made to a single non-versioned object at the same time, it is possible that only a single event notification will be sent 
 
 #### Storage classes
 1. S3 Standard - General Purpose. E.g. big data analytics, mobile & gaming app, content distribution
@@ -391,16 +405,13 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 * Multipart upload must be used for file > 5GB, recommended for file > 100MB
 * S3 Byte-Range fetches parallize GETs, can be used to speed up downloads
 
-### Event Notifications
-* Event notifications can sent in response to actions such as PUTs, POSTs, COPYs or DELETEs, Messages can be sent through SNS, SQS or Lambda.
-
 ### Athena
 * Serverless service to perform analytics directly against S3 files
 
 # ECS
 * ECS is used to run Docker containers and has 3 flavours:
   * Classic: provision EC2 instances to run containers onto.
-      * Must configure `/etc/ecs/ecs.config` with the cluster name
+      * ***Must configure `/etc/ecs/ecs.config` with the cluster name***
       * EC2 instance must run an ECS agent through EC2 instance profile
       * ECS tasks can have IAM roles to execute actions against AWS
   * Fargate: Serverless
@@ -429,7 +440,7 @@ ECR is used to store Docker images
   * Scan - a scan operation examines every item in the table. By default a scan returns all of the data attributes for every item. You can use the  `ProjectionExpression + FilterExpression` parameter so that Scan only returns some of the attributes. For faster performance,use parallel scans.
 * TTL: automatically delete an item after expiry time
 * CLI:
-  * `--projection-expression`: attributes to retrieve
+  * `--projection-expression`: to get only some of the attributes rather than all of them
   * `--filter-expression`: filter results
   * `--page-size`: full dataset is retrieved but each API call will request less data (help avoid timeout)
   * `--max-times` and`--starting-token`: pagination
@@ -535,7 +546,8 @@ After a message has been published to a topic it cant be deleted (recalled)
 * Can have at most 1000 versions. Lifecycle policy: based on time (old versions are removed) or space 
 * Cloning with exactly the same configuration, good for testing. **Migration** cross-account: Create a saved configuration in Team A's account and download it to local machine. Make the account-specific parameter changes and upload to the S3 bucket in Team B's account. From Elastic Beanstalk console, create an application from the saved Configurations.
 * Can run the application as a single docker, doesn't use ECS; ECS can run multiple dockers per EC2 instance in EB, requires `Dockerrun.aws.json(v2)` at the root of source code to generate the ECS task definition
-* Worker environment: define a cron.yaml file and offload long-to-complete tasks to a dedicated worker environment
+* Environments: Can create and manage separate environments for development, testing, and production use
+  * Worker environment: define a cron.yaml file and offload long-to-complete tasks to a dedicated worker environment
 
 ### Languages
 
@@ -598,7 +610,7 @@ Infrastructure as code.
     * __Resources__ (required) - specify the stack resources and their properties such as an EC2 instance or a S3 bucket. You can refer to resources in the Resources and Outputs sections of the template. Resource identifier form:`AWS::aws-product-name::data-type-name`. !GetAtt returns the value of an attribute from a resource in the template e.g. `!GetAtt logicalNameOfResource.attributeName`
     * __Parameters__ (optional) - specifies values that you can pass in to your template at runtime (when you create or update a stack). You can refer to parameters anywhere in the template by leveraging `Fn::Ref`, shorthands is `!Ref` . Useful if resource config is likely to change in the future. 
     * __Mappings__ (optional) - hardcoded. a mapping of keys and associated values that you can use to specify conditional parameter values, similar to a lookup table. You can match a key to a corresponding value by using the `Fn::FindInMap`, shorthands `!FindInMap [MapName, TopLevelKey, SecondLevelKey]` in the Resources and Outputs section.
-    * __Outputs__ (optional) - describes the values that are returned whenever you view your stack’s properties. For example, you can declare an output for an S3 bucket name and then call the Cloudformation describe-stacks AWS CLI command to view the name. A stack can't be deleted if its outputs is referenced by another stack. To reference the output in another stack, leverage `Fn::ImportValue`.
+    * __Outputs__ (optional) - describes the values that are returned whenever you view your stack’s properties. For example, you can declare an output for an S3 bucket name and then call the Cloudformation describe-stacks AWS CLI command to view the name. A stack can't be deleted if its outputs is referenced by another stack. To create a cross-stack reference, use the `Export` output field to flag the value of a resource output for export. Then, use `Fn::ImportValue`to import the value. 
     * __Conditions__ (optional) - defines conditions that control whether certain resources are created or whether certain resource properties are assigned a value during stack creation or update. For example, you could conditionally create a resource that depends on whether the stack is for a production or test environment.
     * __Metadata__ (optional) - objects that provide additional information about the template.
 
@@ -635,6 +647,7 @@ Infrastructure as code.
 
 ## CloudTrail
 * Provide governance, compliance and audit. Enabled by default
+* Organization trail: If you have created an organization in AWS Organizations, you can create a trail that will log all events for all AWS accounts in that organization.
 
 # AWS Shared Responsibility
 
@@ -704,8 +717,8 @@ SaaS – AWS manages everything except user credentials.
 
 * Security
     * HTTPS
-        * Viewer Protocol Policy: redirect HTTP to HTTPS or HTTPS only
-        * Origin Protocol Policy: HTTPS only or Map Viewer
+        * Viewer Protocol Policy: redirect HTTP to HTTPS or HTTPS only. Between Viewer (client) and CloudFront
+        * Origin Protocol Policy: HTTPS only or Match Viewer. Between CloudFront and origin.
     * Restrict viewer access by signed URL (single file) or Signed Cookies (multiple files) for distributing paid content
     * Restrict content based on geo location (whitelist and blacklist)
 
