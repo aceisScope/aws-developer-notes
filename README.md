@@ -195,7 +195,17 @@ Workspaces - VDI
   * Groups cannot be nested
 * Roles: Internal usage within AWS resources.
 * Policies: Policies are JSON documents that contain permissions to AWS services. ie Roles and secrets
+  * Policy types:
+    * Identity-based policies – Attach managed and inline policies to IAM identities (users, groups to which users belong, or roles). Identity-based policies grant permissions to an identity.
+    * Resource-based policies – Attach inline policies to resources. The most common examples of resource-based policies are Amazon S3 bucket policies and IAM role trust policies.
+      * IAM service supports only one type of resource-based policy called a role trust policy, which is attached to an IAM role. An IAM role is both an identity and a resource that supports resource-based policies. 
+    * Permissions boundaries – Use a managed policy as the permissions boundary for an IAM entity (user or role). That policy defines the maximum permissions that the identity-based policies can grant to an entity. **Do not grant permissions**.
+    * Organizations SCPs – Use an AWS Organizations service control policy (SCP) to define the maximum permissions for account members of an organization or organizational unit (OU). **Do not grant permission**.
+    * Access control lists (ACLs) – Use ACLs to control which principals in other accounts can access the resource to which the ACL is attached. 
+    * Session policies – Pass advanced session policies when you use the AWS CLI or AWS API to assume a role or a federated user. 
+  * IAM policy variables: Instead of creating individual policies for each user, you can use policy variables and create a single policy that applies to multiple users (a group policy). 
 * To configure many AWS services, must ***pass*** an IAM role to the service during setup. For this, need action `iam:PassRole`.
+* Billing and Cost: By default, IAM users do not have access to the AWS Billing and Cost Management console. Can grant access by activating IAM user access to the Billing and Cost Management console and attaching an IAM policy to your users.
 
 ### Security Token Service (STS)
 
@@ -234,9 +244,19 @@ Comparing to IAM, Cognito is for "hundreds of users", "mobile users", "Social Id
 Access instance meta data at http://169.254.169.254/latest/meta-data/
 
 * Scipts can be run from the user data section when creating an instance
+* Instance purchasing options
+  * On-Demand Instances – Pay, by the second, for the instances that you launch.
+  * Savings Plans – Reduce your Amazon EC2 costs by making a commitment to a consistent amount of usage, in USD per hour, for a term of 1 or 3 years.
+  * Reserved Instances – Reduce your Amazon EC2 costs by making a commitment to a consistent instance configuration, including instance type and Region, for a term of 1 or 3 years.
+    * The offering class of a Reserved Instance is either Standard or Convertible. A Standard Reserved Instance provides a more significant discount than a Convertible Reserved Instance, but you can't exchange a Standard Reserved Instance. 
+  * Spot Instances – Request unused EC2 instances, which can reduce your Amazon EC2 costs significantly.
+  * Dedicated Hosts – Pay for a physical host that is fully dedicated to running your instances, and bring your existing per-socket, per-core, or per-VM software licenses to reduce costs.
+  * Dedicated Instances – Pay, by the hour, for instances that run on single-tenant hardware.
+  * Capacity Reservations – Reserve capacity for your EC2 instances in a specific Availability Zone for any duration.
 
-## Load Balancers
+## Elastic Load Balancers
 
+* Multi AZ, but not cross region
 * There are 3 types of load balancer; Application, Network and Classic. Application is used to route HTTP/HTTPS (L7) traffic. Network and Classic are used to route TCP (L4) traffic.
 
     1. Application - Layer 7, target groups (based on path, hostname, query string), TLS termination 
@@ -250,6 +270,7 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 * Cross zone load balancing: always on for ALB, disabled by default for NLB
 * SNI to load multiple SSL certs to servce multple websites on one server on ALB and NLB
 * HTTPS listener: to offload the work of encryption and decryption to your load balancer so that your applications can focus on their business logic. Must deploy at least one SSL server certificate on the listener. Application Load Balancer can be used to securely authenticate users for accessing applications via HTTP listener and Cognito User Pools, see [here](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html).
+* Access Logs: Elastic Load Balancing provides access logs that capture detailed information about requests sent to load balancer
 
 ## Auto Scaling Groups
 * Cross AZ, but regional
@@ -560,6 +581,7 @@ After a message has been published to a topic it cant be deleted (recalled)
     * immutable: spin up new instances in a new ASG, deploy new version to it, and swap all the instances when everything is healthy. longest deployment, rollback quickly.
 * Can have at most 1000 versions. Lifecycle policy: based on time (old versions are removed) or space 
 * Cloning with exactly the same configuration, good for testing. **Migration** cross-account: Create a saved configuration in Team A's account and download it to local machine. Make the account-specific parameter changes and upload to the S3 bucket in Team B's account. From Elastic Beanstalk console, create an application from the saved Configurations.
+* Extensions: Any resources created as part of `.ebextensions` is part of EB template and will get deleted if the environment is terminated
 * Can run the application as a single docker, doesn't use ECS; ECS can run multiple dockers per EC2 instance in EB, requires `Dockerrun.aws.json(v2)` at the root of source code to generate the ECS task definition
 * Environments: Can create and manage separate environments for development, testing, and production use
   * Worker environment: define a cron.yaml file and offload long-to-complete tasks to a dedicated worker environment
@@ -597,6 +619,7 @@ Troubleshooting:
 * Artifacts uploaded to S3
 * Can cache files to S3 to increase performance for future builds
 * Specify VPC configuration (VPC ID, Subnet ID, Security Group ID) so build can access resources in VPC
+* CodeBuild Agent: can use the AWS CodeBuild agent to test and debug builds on a local machine.
 
 ### CodeDeploy
 * Deployment groups: in an EC2/On-Premises deployment, a deployment group is a set of individual instances targeted for deployment. 
@@ -628,7 +651,7 @@ Infrastructure as code.
     * __Outputs__ (optional) - describes the values that are returned whenever you view your stack’s properties. For example, you can declare an output for an S3 bucket name and then call the Cloudformation describe-stacks AWS CLI command to view the name. A stack can't be deleted if its outputs is referenced by another stack. To create a cross-stack reference, use the `Export` output field to flag the value of a resource output for export. Then, use `Fn::ImportValue`to import the value. 
     * __Conditions__ (optional) - defines conditions that control whether certain resources are created or whether certain resource properties are assigned a value during stack creation or update. For example, you could conditionally create a resource that depends on whether the stack is for a production or test environment.
     * __Metadata__ (optional) - objects that provide additional information about the template.
-
+* To create a cross-stack reference, use the **Export** output field to flag the value of a resource output for export. Then, use the `Fn::ImportValue` intrinsic function to import the value. For each AWS account, Export names must be unique within a region.
 * Stack creation rollback (get deleted) on error is enabled by default. Stack update rollback will reset the stack to the previous state.
 * Use function Fn:GetAtt to output data
 
@@ -653,7 +676,7 @@ Infrastructure as code.
    * To make X-Ray work on EC2, ensure IAM role is correct and the daemon is running
    * To make X-Ray work on Lambda, ensure it has IAM execution role with proper policy (AWSX-RayWriteOnlyAccess) and X-Ray SDK is imported in the code
 * Instrumentation.
-* Sampling rule: by default X-Ray records the first request every second (reservoir) and 5% (rate) of any addtional requests. Customer rules can change the reservoir and the rate.
+* Sampling rule: by default X-Ray records the first request every second (reservoir) and 5% (rate) of any addtional requests. Customer rules can change the reservoir and the rate. By customizing sampling rules, you can control the amount of data that you record.
 * Elastic Beanstalk includes X-Ray daemon. Run by setting `.ebextensions/xray-daemon.config`. Make sure instance profile has the right IAM role and applicaiton code imports X-Ray SDK.
 * X-Ray on ECS, three patterns: 
   1. As daemon: X-Ray container as a daemon on each instances
