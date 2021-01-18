@@ -437,7 +437,7 @@ ECR is used to store Docker images
   2. Partition Key + Sort Key. The combination must be unique. Data is grouped by partition key.
 * [DynamoDB APIs](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/Welcome.html)
   * Query - a query find items in a table using only the primary key (sort key is optional). Query is more efficient than scan. 
-  * Scan - a scan operation examines every item in the table. By default a scan returns all of the data attributes for every item. You can use the  `ProjectionExpression + FilterExpression` parameter so that Scan only returns some of the attributes. For faster performance,use parallel scans.
+  * Scan - a scan operation examines every item in the table. By default a scan returns all of the data attributes for every item. You can use the  `ProjectionExpression + FilterExpression` parameter so that Scan only returns some of the attributes. For faster performance,use parallel scans. To minimum the impact of scan on provisioned throughput, reduce page size.
 * TTL: automatically delete an item after expiry time
 * CLI:
   * `--projection-expression`: to get only some of the attributes rather than all of them
@@ -488,8 +488,8 @@ ECR is used to store Docker images
 * Can have duplicated messages (at least once delivery)
 * Can have out-of-order messages (best offer ordering)
 * Consumer: Poll SQS for messages. When a consumer receives a message from the SQS queue, it stays in the SQS queue. The message must be deleted by the consumer via DeleteMessageAPI once the message has been fully processed. ASG can be used for scaling consumers horizontally.
-* Message Visibility Timeout: To prevent other conumers from receiving the message, SQS sets a Visibility Timeout, which is the period of time when SQS prevents other consumers from receiving and processing the message by making the message invisible to other consumers. By default it's 30s. Can be set via `ChangeMessageVisibility`.
-* Long polling: When a consumer polls messages from a queue but it is empty, it can wait 1-20s for messages to arrive to descrease the number of API calls and latency. It is preferable to short polling. Can be enabled at queue level of using `WaitTimeSeconds`
+* Message Visibility Timeout: To prevent other conumers from receiving the message, SQS sets a Visibility Timeout, which is the period of time when SQS prevents other consumers from receiving and processing the message by making the message invisible to other consumers. By default it's ***30s***. Can be set via `ChangeMessageVisibility`.
+* Long polling: When a consumer polls messages from a queue but it is empty, it can wait ***1-20s*** for messages to arrive to descrease the number of API calls and latency. It is preferable to short polling. Can be enabled at queue level of using `WaitTimeSeconds`
 
 ### Types
 * Dead Letter Queue: Can set a threshold of how many times a message can go back to the queue. After the `MaximumReceives` threshold is exceeded, the message goes into a dead letter queue.
@@ -531,6 +531,21 @@ After a message has been published to a topic it cant be deleted (recalled)
     * Ensure partition key is a good one
 * KCL: Each shard is read by only one KCL
   
+## Simple Workflow Service (SWF)
+
+[SWF FAQ](https://aws.amazon.com/swf/faqs/)
+
+* Workers are programs that interact with SWF to get tasks, process received tasks and return the results.
+* Decider is a program that controls the coordination of tasks.
+* Domains - workflow and activity types and the workflow execution itself are all scoped to a domain. Domains isolate a set of types, executions, and task lists from other within the same account. You can register a domain by using the console or SWF API. Using JSON.
+* Tasks assigned only once and never duplicated.
+
+### SWF vs SQS
+
+* SWF presents task oriented API whereas SQS offers message oriented API.
+* SWF ensures that a task is assigned only once. With SQS you need to handle duplicated messages and may also need to ensure that a message is processed only once.
+* SWF keeps track of all tasks and events in an application. With SQS you need to implement your own application-level tracking.
+
 
 # Elastic Beanstalk
 
