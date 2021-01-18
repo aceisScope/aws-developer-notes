@@ -212,7 +212,7 @@ Workspaces - VDI
 ## Cognito
 Comparing to IAM, Cognito is for "hundreds of users", "mobile users", "Social Identity Provider" like Google or "SAML users"
 * Cognito User Pools: "Manage user and password". create a serverless database for application users. Integrate with API Gateway and ALB
-  * Can invoke Lambda function on some triggers like authentication events, sign-up, messages or token creation
+  * Can invoke Lambda function on some **triggers** like authentication events, sign-up, messages or token creation
 * Cognito Identity Pools (Federated Identities): "Access AWS services". get identitier for "users" so they obtain temporary AWS credentials, users then can access AWS services directly or through API Gateway. IAM credentials are obtained via STS. You can partition user access using ***policy variables***.
   
 # Security and Encryption
@@ -302,7 +302,7 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 ### Encryption
 
 * At rest encryption has to be defined at launch time. If master is not encrypted, read replicas can't be encrypted.
-    * Whether a snapshot is encrypted is defined by whether the RDS is encrypted or not
+    * Whether a snapshot is encrypted is defined by whether the RDS is encrypted or not. ***If a user copies an encrypted snapshot, the copy of the snapshot must also be encrypted.*** If a user copies an encrypted snapshot across Regions, users cannot use the same AWS KMS encryption key for the copy as used for the source snapshot, because KMS keys are Region-specific. Instead, users must specify a KMS key that is valid in the destination Region.  
     * How to encrypt an unencrypted RDS
     * TDE: Microsoft and Oracle
 * In-flight encryption: SSL certificates 
@@ -816,6 +816,7 @@ SaaS – AWS manages everything except user credentials.
   * Max time to perform request: 29s
   * Throttles at 10000 request/s, returns 429 error. Can set Stage Limit & Method Limit to improve performance
 * Security:
-  * IAM Permission: Sig V4 header. Authentication = IAM | Authorization = IAM Policy. Resource Policies can be used for cross-account access. 
+  * IAM Permission: Sig V4 header. Authentication = IAM | Authorization = IAM Policy. Resource Policies can be used for cross-account access (combined with IAM policy). 
+    * How: Create a resource policy for the APIs that allows access for each IAM user. Create an IAM permission policy and attach it to each IAM user. Set the APIs method authorization type to AWS_IAM. Use Signature Version 4 to sign the API requests.
   * Cognito user tools: pass token. Cognito user tools. Authentication = Cognito User Pools | Authorization = API Gateway Methods
   * Lambda authorizer: request parameter-based token authorizer. Authentication = External | Authorization = Lambda function.
