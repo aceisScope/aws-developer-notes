@@ -206,6 +206,9 @@ Workspaces - VDI
   * IAM policy variables: Instead of creating individual policies for each user, you can use policy variables and create a single policy that applies to multiple users (a group policy). 
 * To configure many AWS services, must ***pass*** an IAM role to the service during setup. For this, need action `iam:PassRole`.
 * Billing and Cost: By default, IAM users do not have access to the AWS Billing and Cost Management console. Can grant access by activating IAM user access to the Billing and Cost Management console and attaching an IAM policy to your users.
+* Tools:
+  * IAM Access Analyzer: help identify the resources in organization and accounts, such as Amazon S3 buckets or IAM roles, that are shared with an external entity. This lets you identify unintended access to your resources and data, which is a security risk.
+  * Access Advisor: To help identify the unused roles, IAM reports the last-used timestamp that represents when a role was last used to make an AWS request.
 
 ### Security Token Service (STS)
 
@@ -256,7 +259,7 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 
 ## Elastic Load Balancers
 
-* Multi AZ, but not cross region
+* Multi AZ, but not cross region. Cross-zone load balancing mechanism, see [here](https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html)
 * There are 3 types of load balancer; Application, Network and Classic. Application is used to route HTTP/HTTPS (L7) traffic. Network and Classic are used to route TCP (L4) traffic.
 
     1. Application - Layer 7, target groups (based on path, hostname, query string), TLS termination 
@@ -313,7 +316,7 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 * Snapshots triggered manually
 
 ### Read replicas: 
-* up to 5
+* up to **5**
 * within AZ, cross AZ or cross region
 * ASYNC
 * network cost when data goes over AZs, so extra cost if read replicas are in different AZs
@@ -620,6 +623,7 @@ Troubleshooting:
 * Can cache files to S3 to increase performance for future builds
 * Specify VPC configuration (VPC ID, Subnet ID, Security Group ID) so build can access resources in VPC
 * CodeBuild Agent: can use the AWS CodeBuild agent to test and debug builds on a local machine.
+* Timeout: the build process will automatically terminate post the expiry of the configured timeout
 
 ### CodeDeploy
 * Deployment groups: in an EC2/On-Premises deployment, a deployment group is a set of individual instances targeted for deployment. 
@@ -842,4 +846,6 @@ SaaS – AWS manages everything except user credentials.
   * IAM Permission: Sig V4 header. Authentication = IAM | Authorization = IAM Policy. Resource Policies can be used for cross-account access (combined with IAM policy). 
     * How: Create a resource policy for the APIs that allows access for each IAM user. Create an IAM permission policy and attach it to each IAM user. Set the APIs method authorization type to AWS_IAM. Use Signature Version 4 to sign the API requests.
   * Cognito user tools: pass token. Cognito user tools. Authentication = Cognito User Pools | Authorization = API Gateway Methods
-  * Lambda authorizer: request parameter-based token authorizer. Authentication = External | Authorization = Lambda function.
+  * Lambda authorizer: request parameter-based token authorizer. Authentication = External | Authorization = Lambda function. 
+    * A Lambda authorizer is useful if you want to implement a **custom authorization scheme** that uses a bearer token authentication strategy such as OAuth or SAML, or that uses request parameters to determine the caller's identity.
+* API Gateway Usage Plans: specify who can access one or more deployed API stages and methods—and also how much and how fast they can access them 
