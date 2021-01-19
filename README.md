@@ -252,7 +252,11 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
   * Savings Plans – Reduce your Amazon EC2 costs by making a commitment to a consistent amount of usage, in USD per hour, for a term of 1 or 3 years.
   * Reserved Instances – Reduce your Amazon EC2 costs by making a commitment to a consistent instance configuration, including instance type and Region, for a term of 1 or 3 years.
     * The offering class of a Reserved Instance is either Standard or Convertible. A Standard Reserved Instance provides a more significant discount than a Convertible Reserved Instance, but you can't exchange a Standard Reserved Instance. 
-  * Spot Instances – Request unused EC2 instances, which can reduce your Amazon EC2 costs significantly.
+    * Only Zonal Reserved Instances provide capacity reservations, Regional Reserved Instances don't
+  * Spot Instances – Request unused EC2 instances, which can reduce your Amazon EC2 costs significantly. Can specify that Amazon EC2 should do one of the following when it interrupts a Spot Instance:
+    * Stop the Spot Instance
+    * Hibernate the Spot Instance
+    * Terminate the Spot Instance
   * Dedicated Hosts – Pay for a physical host that is fully dedicated to running your instances, and bring your existing per-socket, per-core, or per-VM software licenses to reduce costs.
   * Dedicated Instances – Pay, by the hour, for instances that run on single-tenant hardware.
   * Capacity Reservations – Reserve capacity for your EC2 instances in a specific Availability Zone for any duration.
@@ -287,8 +291,8 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 * Network drive, can be attached to only on instance, locked to AZ
 * EBS has four types: 
     * SSD (can be used as boot volumes): 
-      * GP2: 3 IOPS/GB, max IOPS is 16000
-      * IOI: high performance, provisioned IOPS (max 64000 Nitro or 32000)
+      * GP2: 3 IOPS/GB, between a minimum of 100 IOPS (at 33.33 GiB and below) and a maximum of 16,000 IOPS (at 5,334 GiB and above)
+      * IOI: high performance, provisioned IOPS (max 64000 Nitro or 32000). The maximum ratio of provisioned IOPS to requested volume size (in GiB) is 50:1 for io1 volumes, and 500:1 for io2 volumes.
     * HDD: 
       * STI: throughput optimized, streaming workload, e.g. Apache Kafka
       * SCI: lowest cost
@@ -468,15 +472,21 @@ ECR is used to store Docker images
   * `--filter-expression`: filter results
   * `--page-size`: full dataset is retrieved but each API call will request less data (help avoid timeout)
   * `--max-times` and`--starting-token`: pagination
+* Backup to S3: DynamoDB offers two built-in backup methods, on-demand and point-in-time recovery, but **don't have access to the S3 buckets that are used for these backups**. To create backups that can be downloaded, see [here](https://aws.amazon.com/premiumsupport/knowledge-center/back-up-dynamodb-s3/):
+  * Data Pipeline
+  * Amazon EMR
+  * AWS Glue
+  
+### Consistency
+* Read consistency:
+  1. Eventual consistent reads (default). Offers best read performance. Consistency across all copies of data is usually reached within a second.
+  2. Strongly consistent reads. Returns a result that reflects all writes that received a successful response prior to the read. By setting `ConsistentRead = true`.
+* Transactions: use transactional read and write APIs to manage to achieve ACID
 
 ### Provisioned Throughput
 * DynamoDB tables must be have provisioned RCUs and WCUs. If you exceed your provisioned throughput you will get a HTTP status code 400, `ProvisionedThroughputExceededException`.
 * WCU (Write Capacity Units): one write per second for an item up to 1KB. If an item is bigger, more WCUs are consumed.
-* Reads: 
-  * Read consistency:
-    1. Eventual consistent reads (default). Offers best read performance. Consistency across all copies of data is usually reached within a second.
-    2. Strongly consistent reads. Returns a result that reflects all writes that received a successful response prior to the read.
-  * RCUs: one strongly consistent read per second, or two eventually consistent reads per second, for an item up to 4KB.
+* RCUs: one strongly consistent read per second, or two eventually consistent reads per second, for an item up to 4KB.
 * [HA resolutions](https://aws.amazon.com/premiumsupport/knowledge-center/dynamodb-high-latency/):
   * DAX: cache, solves the hot key problems (too many reads)
   * Global tables: reduce the distance between the client and the DynamoDB endpoint
@@ -626,6 +636,7 @@ Troubleshooting:
 * Timeout: the build process will automatically terminate post the expiry of the configured timeout
 
 ### CodeDeploy
+* `appspec.yml` file in the root directory to map resources and specify permissions
 * Deployment groups: in an EC2/On-Premises deployment, a deployment group is a set of individual instances targeted for deployment. 
 * Deployment: 
   * In-place deployment: The application on each instance in the deployment group is stopped, the latest application revision is installed, and the new version of the application is started and validated
@@ -650,7 +661,20 @@ Infrastructure as code.
 
 * A CloudFormation is made up of the following sections:
     * __Resources__ (required) - specify the stack resources and their properties such as an EC2 instance or a S3 bucket. You can refer to resources in the Resources and Outputs sections of the template. Resource identifier form:`AWS::aws-product-name::data-type-name`. !GetAtt returns the value of an attribute from a resource in the template e.g. `!GetAtt logicalNameOfResource.attributeName`
-    * __Parameters__ (optional) - specifies values that you can pass in to your template at runtime (when you create or update a stack). You can refer to parameters anywhere in the template by leveraging `Fn::Ref`, shorthands is `!Ref` . Useful if resource config is likely to change in the future. 
+    * __Parameters__ (optional) - specifies values that you can pass in to your template at runtime (when you create or update a stack). You can refer to parameters anywhere in the template by leveraging `Fn::Ref`, shorthands is `!Ref` . Useful if resource config is likely to change in the future. Supported types:
+        ```
+        String – A literal string
+        Number – An integer or float
+        List<Number> – An array of integers or floats
+        CommaDelimitedList – An array of literal strings that are separated by commas
+        AWS::EC2::KeyPair::KeyName – An Amazon EC2 key pair name
+        AWS::EC2::SecurityGroup::Id – A security group ID
+        AWS::EC2::Subnet::Id – A subnet ID
+        AWS::EC2::VPC::Id – A VPC ID
+        List<AWS::EC2::VPC::Id> – An array of VPC IDs
+        List<AWS::EC2::SecurityGroup::Id> – An array of security group IDs
+        List<AWS::EC2::Subnet::Id> – An array of subnet IDs
+        ```
     * __Mappings__ (optional) - hardcoded. a mapping of keys and associated values that you can use to specify conditional parameter values, similar to a lookup table. You can match a key to a corresponding value by using the `Fn::FindInMap`, shorthands `!FindInMap [MapName, TopLevelKey, SecondLevelKey]` in the Resources and Outputs section.
     * __Outputs__ (optional) - describes the values that are returned whenever you view your stack’s properties. For example, you can declare an output for an S3 bucket name and then call the Cloudformation describe-stacks AWS CLI command to view the name. A stack can't be deleted if its outputs is referenced by another stack. To create a cross-stack reference, use the `Export` output field to flag the value of a resource output for export. Then, use `Fn::ImportValue`to import the value. 
     * __Conditions__ (optional) - defines conditions that control whether certain resources are created or whether certain resource properties are assigned a value during stack creation or update. For example, you could conditionally create a resource that depends on whether the stack is for a production or test environment.
@@ -786,7 +810,7 @@ SaaS – AWS manages everything except user credentials.
 * If one application invokes too many concurrent Lambda functions, it may throttle other applications' Lambda functions.
 * Asychronous Invocations: if Lambda doesn't have enough concurrency available, additional requests are throttled, events are returned to the internal event queue.
 * Cold start: when lauching a new instance, the initialization stage when code is loaded and code outside the handler run. First request has longer latency than the rest. Provisioned concurrency can be allocated before the function is invoked.
-* Lambda Optimization Tips: Avoid using recursion, keep deployment size minimum, install only dependecies that is required, keep your function logic outside handler. (source: https://docs.aws.amazon.com/lambda/latest/dg/best-practices.html)
+* Can configure Application Auto Scaling to manage provisioned concurrency on a schedule or based on utilization
 
 ### Invocations
 * Three ways of processing events:
@@ -821,6 +845,7 @@ SaaS – AWS manages everything except user credentials.
   
   
 # API Gateway
+* Must deploy it to make it callable by your users
 * CORS can be enabled at API Gateway
 * Endpoint types: 
   * Edge-optimized: for global clients
