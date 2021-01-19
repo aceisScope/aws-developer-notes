@@ -212,7 +212,7 @@ Workspaces - VDI
 
 ### Security Token Service (STS)
 
-* Assume a role: define an IAM role with or cross-account and which principles can acess this role, use AssumeRole API to impersonate this role with temporary credentials fro 15 mins to 1 h. *Example: The development team at a retail organization wants to allow a Lambda function in its AWS Account A to access a DynamoDB table in another AWS Account B. Create an IAM role in Account B with access to DynamoDB. Modify the trust policy of the role in Account B to allow the execution role of Lambda to assume this role. Update the Lambda function code to add the AssumeRole API call.*
+* Assume a role: define an IAM role with or cross-account and which principles can acess this role, use AssumeRole API to impersonate this role with temporary credentials fro 15 mins to 1 h. *Example: The development team at a retail organization wants to allow a Lambda function in its AWS Account A to access a DynamoDB table in another AWS Account B. Create an IAM role in Account B with access to DynamoDB. Modify the trust policy of the role in Account B to allow the execution role of Lambda to assume this role. Update the Lambda function code to add the AssumeRole API call.* See [here](https://aws.amazon.com/premiumsupport/knowledge-center/lambda-function-assume-iam-role/)
   * MFA: Use GetSessionToken API to get a session token after MFA, need to set appropriate IAM policy with IAM conditions, set `aws::MultiFactorAuth::true` 
 
 ### Active Directory Federation
@@ -773,6 +773,7 @@ SaaS – AWS manages everything except user credentials.
   * X-Ray: Enable `Active Tracing` in config. Make sure Lambda has an execution role with correct IAM policy and env var to communicate with X-Ray
 * External dependencies need to be install with the code and zip together. If zip file is less than 50M then directly to Lambda, else to S3
 * Alias can be use to manage different versions for Lambda. They are mutable.
+* **How to configure a Lambda function to assume a role from another AWS account** See [here](#security-token-service-sts)
 
 ### Performance
 * RAM: from 128M to 3008M in 64M increment. The more RAM added, the more vCPU credits to get. If application is CPU-bound (computational heave), add more RAM.
