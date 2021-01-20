@@ -260,6 +260,7 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
   * Dedicated Hosts – Pay for a physical host that is fully dedicated to running your instances, and bring your existing per-socket, per-core, or per-VM software licenses to reduce costs.
   * Dedicated Instances – Pay, by the hour, for instances that run on single-tenant hardware.
   * Capacity Reservations – Reserve capacity for your EC2 instances in a specific Availability Zone for any duration.
+* Monitoring: By default, your instance is enabled for basic monitoring with **5-minute**. You can optionally enable detailed monitoring. After you enable detailed monitoring, the Amazon EC2 console displays monitoring graphs with a **1-minute** period for the instance. `aws ec2 monitor-instances --instance-ids i-1234567890abcdef0`
 
 ## Elastic Load Balancers
 
@@ -296,11 +297,13 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
     * HDD: 
       * STI: throughput optimized, streaming workload, e.g. Apache Kafka
       * SCI: lowest cost
-* Encryption types:
-  1. Data at rest inside the volume
-  2. All data moving between the volume and the instance
-  3. All snapshots created from the volume
-  4. All volumes created from those snapshots
+* Encryption: Encryption by default is a Region-specific setting. If you enable it for a Region, you cannot disable it for individual volumes or snapshots in that Region
+  * types:
+    1. Data at rest inside the volume
+    2. All data moving between the volume and the instance
+    3. All snapshots created from the volume
+    4. All volumes created from those snapshots
+  * A volume restored from an encrypted snapshot, or a copy of an encrypted snapshot, is always encrypted
 
 ## Instance Store
 
@@ -316,7 +319,7 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 ## RDS
 
 * Supports Postgres, MySQL, MariaDB, Oracle, Microsoft SQL Server
-* Backup automatically, 7 - 35 days retention
+* Backup automatically, 7 - 35 days retention. Multi-AZ, single region 
 * Snapshots triggered manually
 
 ### Read replicas: 
@@ -353,7 +356,7 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 * Cross region or global (1 primary region, up to 5 secondary region, up to 16 read replica per secondary region)
 
 ## ElastiCache
-
+* Significantly improve latency and throughput for many **read-heavy** application workloads (such as social networking, gaming, media sharing, and Q&A portals) or **compute-intensive** workloads (such as a recommendation engine) 
 * Managed memcached and Redis
     * Redis: Multi AZ, Read replicas, Data Durability with AOF, backup and restore
     * memcached: sharding, non persistence, no backup or restore, multi-threaded
@@ -403,7 +406,7 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 
 ### Advanced
 
-* S3 provides read-after-write consistency for PUTS of new objects. S3 offers eventual consistency for overwrite PUTS and DELETES.
+* Consistency: S3 provides read-after-write consistency for PUTS of new objects. S3 offers eventual consistency for overwrite PUTS and DELETES.
 * When versioning is on, S3 MFA-Delete can be enabled. It can only be done by bucket owner via AWS CLI.
 * Access logs for auditing. Don't set logging bucket to be the monitored bucket. 
 * CRR and SRR (Cross and Same region replication) requires proper IAM permission to S3 for copying data
@@ -484,7 +487,7 @@ ECR is used to store Docker images
 * Transactions: use transactional read and write APIs to manage to achieve ACID
 
 ### Provisioned Throughput
-* DynamoDB tables must be have provisioned RCUs and WCUs. If you exceed your provisioned throughput you will get a HTTP status code 400, `ProvisionedThroughputExceededException`.
+* DynamoDB tables must be have provisioned RCUs and WCUs. They are specific to one table. If you exceed your provisioned throughput you will get a HTTP status code 400, `ProvisionedThroughputExceededException`.
 * WCU (Write Capacity Units): one write per second for an item up to 1KB. If an item is bigger, more WCUs are consumed.
 * RCUs: one strongly consistent read per second, or two eventually consistent reads per second, for an item up to 4KB.
 * [HA resolutions](https://aws.amazon.com/premiumsupport/knowledge-center/dynamodb-high-latency/):
@@ -514,9 +517,9 @@ ECR is used to store Docker images
 [SQS FAQ](https://aws.amazon.com/sqs/faqs/)
 
 [SQS tutorial](https://aws.amazon.com/getting-started/tutorials/send-messages-distributed-applications/)
-
+* Scales automatically
 * Queueing works as a buffer to decouple of components of an application. 
-* Unlimited number of messages in the queue. The maximum amount of time that a message can live in a SQS queue is 14 days. The retention period can be configred to be anywhere betweeen 1 minute and 14 days. The default is 4 days. Once the message retention limit is reached, your messages are automatically deleted.
+* Unlimited number of messages in the queue. The retention period can be configred to be anywhere betweeen **1 minute and 14 days**. The default is 4 days. Once the message retention limit is reached, your messages are automatically deleted.
 * Low latency
 * SQS messages must be between 1 and ***256 KB*** in size. To send big message by using SQS Extended Client: send large message to S3 and small metadata message to the queue. 
 * Can have duplicated messages (at least once delivery)
@@ -626,11 +629,11 @@ Troubleshooting:
 * If pipleline can't perform an action, make sure the attached IAM Service Role has correct permission
 
 ### CodeBuild
+* fully managed, scale automatically
 * `buildspec.yaml` must be at the root of the source code
 * Environment variables can be plaintext or secure store
 * Phases: Install -> Pre build -> Build -> Post builds
-* Artifacts uploaded to S3
-* Can cache files to S3 to increase performance for future builds
+* Artifacts uploaded to S3. Can cache files to S3 to increase performance for future builds
 * Specify VPC configuration (VPC ID, Subnet ID, Security Group ID) so build can access resources in VPC
 * CodeBuild Agent: can use the AWS CodeBuild agent to test and debug builds on a local machine.
 * Timeout: the build process will automatically terminate post the expiry of the configured timeout
@@ -650,8 +653,11 @@ Troubleshooting:
       * AfterInstall
       * ApplicationStart
       * ***ValidateService***
- * [Rollback](https://docs.aws.amazon.com/codedeploy/latest/userguide/deployments-rollback-and-redeploy.html): roll back deployments by redeploying a previously deployed revision of an application as a new deployment on the failed instances
- 
+* [Rollback](https://docs.aws.amazon.com/codedeploy/latest/userguide/deployments-rollback-and-redeploy.html): roll back deployments by redeploying a previously deployed revision of an application as a new deployment on the failed instances
+* Blue/Green deployment: CodeDeploy provisions your new application version alongside the old version before rerouting your production traffic.
+  * AWS Lambda: Traffic is shifted from one version of a Lambda function to a new version of the same Lambda function.
+  * Amazon ECS: Traffic is shifted from a task set in your Amazon ECS service to an updated, replacement task set in the same Amazon ECS service.
+  * EC2/On-Premises: Traffic is shifted from one set of instances in the original environment to a replacement set of instances.
 
 # CloudFormation
 
@@ -802,7 +808,7 @@ SaaS – AWS manages everything except user credentials.
 ### Performance
 * RAM: from 128M to 3008M in 64M increment. The more RAM added, the more vCPU credits to get. If application is CPU-bound (computational heave), add more RAM.
 * Timeout: default 3s, max is 15min.
-* Execution context: temporary runtime environment that initializes dependencis for Lambda. So intilization code should be outside the function handler and reuse it across executions. It includes `/tmp` directory that can be used to write heavy files, max 512M. For permanent file storage, use S3.
+* Execution context: temporary runtime environment that initializes dependencies for Lambda. **So intilization code should be outside the function handler and reuse it across executions.** It includes `/tmp` directory that can be used to write heavy files, max 512M. For permanent file storage, use S3.
 
 ### Concurrency
 * Up to 1000 concurrent excecutions per account. Set a **reserved concurrency** to limit this number. Each invocation over the concurrency will trigger a throttle.
