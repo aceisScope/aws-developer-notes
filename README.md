@@ -261,12 +261,12 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
   * Dedicated Instances – Pay, by the hour, for instances that run on single-tenant hardware.
   * Capacity Reservations – Reserve capacity for your EC2 instances in a specific Availability Zone for any duration.
 * Monitoring: By default, your instance is enabled for basic monitoring with **5-minute**. You can optionally enable detailed monitoring. After you enable detailed monitoring, the Amazon EC2 console displays monitoring graphs with a **1-minute** period for the instance. `aws ec2 monitor-instances --instance-ids i-1234567890abcdef0`
+  * [Available CloudWatch metrics](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/viewing_metrics_with_cloudwatch.html): CPU, Disk, Network 
 
 ## Elastic Load Balancers
 
 * Multi AZ, but not cross region. Cross-zone load balancing mechanism, see [here](https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html)
 * There are 3 types of load balancer; Application, Network and Classic. Application is used to route HTTP/HTTPS (L7) traffic. Network and Classic are used to route TCP (L4) traffic.
-
     1. Application - Layer 7, target groups (based on path, hostname, query string), TLS termination 
           1. Target Groups: EC2, ECS, Lambda, IP
           2. True client IP address is in `X-Forwarded-For`
@@ -517,10 +517,10 @@ ECR is used to store Docker images
 [SQS FAQ](https://aws.amazon.com/sqs/faqs/)
 
 [SQS tutorial](https://aws.amazon.com/getting-started/tutorials/send-messages-distributed-applications/)
-* Scales automatically
+* Scales automatically. Low latency.
 * Queueing works as a buffer to decouple of components of an application. 
 * Unlimited number of messages in the queue. The retention period can be configred to be anywhere betweeen **1 minute and 14 days**. The default is 4 days. Once the message retention limit is reached, your messages are automatically deleted.
-* Low latency
+* The max number of messages to retrieve at one time is **10**
 * SQS messages must be between 1 and ***256 KB*** in size. To send big message by using SQS Extended Client: send large message to S3 and small metadata message to the queue. 
 * Can have duplicated messages (at least once delivery)
 * Can have out-of-order messages (best offer ordering)
@@ -559,7 +559,7 @@ After a message has been published to a topic it cant be deleted (recalled)
   * Kinesis Analytics: real-time analysis on streams using SQL
   * Kinesis Firehose: load streams into S3, Redshift, ElasticSearch, ...
 * Streams are devided into shards. ***Records are ordered per shard***. 1MB/s.
-* Data retention is 1 day by default, up to 7 days
+* Data retention is 1 day by default, up to **7 days**
 * Data can't deleted once inserted into Kinesis
 * Put Records: PutRecordAPI + Partition key that gets hashed, same key goes to the same partition
 * ProvisionedThroughputExceededExceptions: sending too much data for one shard. Solution:
@@ -617,9 +617,10 @@ After a message has been published to a topic it cant be deleted (recalled)
 # CI/CD
 
 ### CodeCommit
-Notifications: 
-* SNS/Lambda E.g. Deletion of branches, trigger for push in master, notify external build system, trigger Lambda function for code analysis
-* CloudWatch events. E.g. trigger for pull requests, commit comment events, event rules go to SNS topic
+* Notifications: 
+  * SNS/Lambda E.g. Deletion of branches, trigger for push in master, notify external build system, trigger Lambda function for code analysis
+  * CloudWatch events. E.g. trigger for pull requests, commit comment events, event rules go to SNS topic
+* Encryption at rest
 
 ### CodePipeline
 Troubleshooting: 
@@ -653,11 +654,13 @@ Troubleshooting:
       * AfterInstall
       * ApplicationStart
       * ***ValidateService***
+* Deployment:
+  * In-place Deployment: The application on each instance in the deployment group is stopped, the latest application revision is installed, and the new version of the application is started and validated
+  * Blue/Green deployment: CodeDeploy provisions your new application version alongside the old version before rerouting your production traffic.
+    * AWS Lambda: Traffic is shifted from one version of a Lambda function to a new version of the same Lambda function.
+    * Amazon ECS: Traffic is shifted from a task set in your Amazon ECS service to an updated, replacement task set in the same Amazon ECS service.
+    * EC2/On-Premises: Traffic is shifted from one set of instances in the original environment to a replacement set of instances.
 * [Rollback](https://docs.aws.amazon.com/codedeploy/latest/userguide/deployments-rollback-and-redeploy.html): roll back deployments by redeploying a previously deployed revision of an application as a new deployment on the failed instances
-* Blue/Green deployment: CodeDeploy provisions your new application version alongside the old version before rerouting your production traffic.
-  * AWS Lambda: Traffic is shifted from one version of a Lambda function to a new version of the same Lambda function.
-  * Amazon ECS: Traffic is shifted from a task set in your Amazon ECS service to an updated, replacement task set in the same Amazon ECS service.
-  * EC2/On-Premises: Traffic is shifted from one set of instances in the original environment to a replacement set of instances.
 
 # CloudFormation
 
@@ -688,13 +691,16 @@ Infrastructure as code.
 * To create a cross-stack reference, use the **Export** output field to flag the value of a resource output for export. Then, use the `Fn::ImportValue` intrinsic function to import the value. For each AWS account, Export names must be unique within a region.
 * Stack creation rollback (get deleted) on error is enabled by default. Stack update rollback will reset the stack to the previous state.
 * Use function Fn:GetAtt to output data
+* CLI commands: 
+  * `cloudformation package`: packages the local artifacts (local paths) that your AWS CloudFormation template references. The command will upload local artifacts, such as your source code for your AWS Lambda function.
+  * `cloudformation deploy`: command deploys the specified AWS CloudFormation template by creating and then executing a changeset
 
 # Monitoring
 
 ## CloudWatch
 * Metrics: a variable to monitor, belong to namespaces. EC2 details monitoring get metrics every 1 minute instead of 5. Customer high resolution metrics standard is 1 min, can be up to 1 second. To create custom metrics, use API PutMetricData.
 * Alarms: used to trigger notification for metrics. High resolution metric alarm can be trigger at 10 or 30 s.
-* Logs: can go to batch exporter to S3 for archival or stream to ElasticSearch for analysis. Never expire by default, but can define expiration policy at log groups level. Make sure IAM permission correct to send logs to CloudWatch. 
+* Logs: can go to batch exporter to **S3** for archival or stream to **ElasticSearch** for analysis. Never expire by default, but can define expiration policy at log groups level. Make sure IAM permission correct to send logs to CloudWatch. 
   * EC2 needs to install a CloudWatch agent to push logs. 
   * Logs can use filter expressions. Filters only publish metrics data for events after the filter is created.
 * Events: scheduled cron jobs.
