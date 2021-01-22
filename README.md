@@ -214,7 +214,7 @@ Workspaces - VDI
 
 ### Security Token Service (STS)
 
-* Assume a role: define an IAM role with or cross-account and which principles can acess this role, use AssumeRole API to impersonate this role with temporary credentials fro 15 mins to 1 h. *Example: The development team at a retail organization wants to allow a Lambda function in its AWS Account A to access a DynamoDB table in another AWS Account B. Create an IAM role in Account B with access to DynamoDB. Modify the trust policy of the role in Account B to allow the execution role of Lambda to assume this role. Update the Lambda function code to add the AssumeRole API call.* See [here](https://aws.amazon.com/premiumsupport/knowledge-center/lambda-function-assume-iam-role/)
+* Assume a role: define an IAM role with or cross-account and which principles can acess this role, use AssumeRole API to impersonate this role with temporary credentials fro **15 mins to 1 h**. *Example: The development team at a retail organization wants to allow a Lambda function in its AWS Account A to access a DynamoDB table in another AWS Account B. Create an IAM role in Account B with access to DynamoDB. Modify the trust policy of the role in Account B to allow the execution role of Lambda to assume this role. Update the Lambda function code to add the AssumeRole API call.* See [here](https://aws.amazon.com/premiumsupport/knowledge-center/lambda-function-assume-iam-role/)
   * MFA: Use GetSessionToken API to get a session token after MFA, need to set appropriate IAM policy with IAM conditions, set `aws::MultiFactorAuth::true` 
 
 ### Active Directory Federation
@@ -374,7 +374,10 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 
 * Max object size is 5TB, min object size is 0 bytes. Largest upload in a single PUT is 5GB. (Objects larger than 100MB should be uploaded with multipart uploader)
 * No limit on number of objects in a bucket
-* Versioning needs to be enabled at bucket level. Same key overwrite will increase the version. If it's not enabled, file will be versioned "null". 
+* Versioning needs to be enabled at **bucket** level. Same key overwrite will increase the version. If it's not enabled, file will be versioned "null". 
+* CLI: e.g. `aws s3api list-objects`
+  * `--page-size`: full dataset is retrieved but each API call will request less data (help avoid timeout)
+  * `--max-times` and`--starting-token`: pagination
 
 ### Encryption
 
@@ -437,6 +440,7 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 * Note S3 KMS limiation
 * Multipart upload must be used for file > 5GB, recommended for file > 100MB
 * S3 Byte-Range fetches parallize GETs, can be used to speed up downloads
+* S3 Select enables applications to retrieve only a subset of data from an object by using simple SQL expressions. 
 
 ### Athena
 * Serverless service to perform analytics directly against S3 files
@@ -532,10 +536,11 @@ ECR is used to store Docker images
 
 ### Types
 * Dead Letter Queue: Can set a threshold of how many times a message can go back to the queue. After the `MaximumReceives` threshold is exceeded, the message goes into a dead letter queue.
-* Delay Queue: delay a message up to 15mins, default is 0s.Can override default value on sending by using `DelaySeconds` param.
+* Delay Queue: delay a message up to **15mins**, default is 0s.Can override default value on sending by using `DelaySeconds` param.
 * FIFO queue: exactly-once send capability, maintain ordering. Limited throughput: 300 ms/s without batch, 3000 with.
   * Deduplication interval is 5mins. Two methods: content-based or explicitly provide a `MessageDeduplicationID`.
-  * MessageGroupID: Each Group ID have a different consumer. Messages in the same group sharing the same `MessageGroupID` will be in order, but across-group ordering is not guaranteed. 
+  * **MessageGroupID**: Each Group ID have a different consumer. Messages in the same group sharing the same `MessageGroupID` will be in order, but across-group ordering is not guaranteed. 
+  * MessageDeduplicationId: If a message with a particular message deduplication ID is sent successfully, any messages sent with the same message deduplication ID are accepted successfully but aren't delivered during the 5-minute deduplication interval.
 
 ## Simple Notification Service (SNS)
 
@@ -568,7 +573,7 @@ After a message has been published to a topic it cant be deleted (recalled)
     * Retries with backoff
     * Increas shards (scaling)
     * Ensure partition key is a good one
-* KCL: Each shard is read by only one KCL
+* KCL: Each KCL consumer application instance uses "workers" to process data in Kinesis shards. At any given time, __each shard of data records is bound to a particular worker__ via a lease.
   
 ## Simple Workflow Service (SWF)
 
@@ -600,7 +605,9 @@ After a message has been published to a topic it cant be deleted (recalled)
 * Can have at most 1000 versions. Lifecycle policy: based on time (old versions are removed) or space 
 * Cloning with exactly the same configuration, good for testing. **Migration** cross-account: Create a saved configuration in Team A's account and download it to local machine. Make the account-specific parameter changes and upload to the S3 bucket in Team B's account. From Elastic Beanstalk console, create an application from the saved Configurations.
 * Extensions: Any resources created as part of `.ebextensions` is part of EB template and will get deleted if the environment is terminated
-* Can run the application as a single docker, doesn't use ECS; ECS can run multiple dockers per EC2 instance in EB, requires `Dockerrun.aws.json(v2)` at the root of source code to generate the ECS task definition
+* Platforms: see [here](https://docs.aws.amazon.com/elasticbeanstalk/latest/platforms/platforms-supported.html)
+  * Docker: Can run the application as a single docker, doesn't use ECS; ECS can run multiple dockers per EC2 instance in EB, requires `Dockerrun.aws.json(v2)` at the root of source code to generate the ECS task definition 
+  * MultiDocker
 * Environments: Can create and manage separate environments for development, testing, and production use
   * Worker environment: define a cron.yaml file and offload long-to-complete tasks to a dedicated worker environment
 
