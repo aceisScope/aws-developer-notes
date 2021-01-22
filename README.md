@@ -45,6 +45,8 @@ Table of Contents
 
 * [API Gateway](#api-gateway)
 
+* [SAM](#sam)
+
 [Exam Blueprint](http://awstrainingandcertification.s3.amazonaws.com/production/AWS_certified_developer_associate_blueprint.pdf)
 
 # AWS-Services
@@ -887,3 +889,11 @@ SaaS – AWS manages everything except user credentials.
   * Lambda authorizer: request parameter-based token authorizer. Authentication = External | Authorization = Lambda function. 
     * A Lambda authorizer is useful if you want to implement a **custom authorization scheme** that uses a bearer token authentication strategy such as OAuth or SAML, or that uses request parameters to determine the caller's identity.
 * API Gateway Usage Plans: specify who can access one or more deployed API stages and methods—and also how much and how fast they can access them 
+
+# SAM
+* Serverless Application model, generate CloudFormation
+* Transform header indicates it's SAM: `Transform: 'AWS::Severless-2017-01-01'`
+* Package and Deploy: 
+  * `aws cloudformation package / sam package`
+  * `aws cloudformation deploy / sam deploy`
+* Policy Templates: S3ReadPolicy, SQSPollerPolicy, DynamoDBCrudPolicy, etc
