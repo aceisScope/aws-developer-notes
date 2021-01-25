@@ -49,144 +49,9 @@ Table of Contents
 
 [Exam Blueprint](http://awstrainingandcertification.s3.amazonaws.com/production/AWS_certified_developer_associate_blueprint.pdf)
 
-# AWS-Services
+# Cheatsheet
 
-EC2 - Elastic Compute Cloud virtual machines
-
-Lightsail - Provisiong service - Very hands off
-
-Elastic Container Service - running containers such as docker at scale
-
-Lambda - Serverless functions
-
-Elastic Beanstalk - Easier route for developers to get up and running with their cloud
-
-ElastiCache - Cache common searches in front of DB servers
-
-S3 - Key pair object storage kept in buckets
-
-EFS - NFS can be mounted on multiple instances
-
-Glacier - Archival storage
-
-Snowball - Hardware appliance to transfer data between on-prem and AWS
-
-Storage gateway - Virtual appliances that live on-prem and replicate to AWS
-
-RDS - MySQL, MSSQL, Aurora, PostGreSQL
-
-DynamoDB - NoSQL
-
-RedShitft - Data warehousing
-
-AWS Migration Hub - Dashboard that lets you track your application migration
-
-Application Discovery Service - tracks your applications dependencies
-
-Database Migration Service - Migrate DBs to AWS
-
-Server Migration Service
-
-VPC Virtual Private Cloud
-
-Cloudfront - Content Delivery Network (CDN) caches content to make it available quicker to the end user.
-
-Route53 - Amazon's DNS service
-
-API Gateway - Creating API's for your own services
-
-Direct Connect - Network peering between yourself and AWS
-
-Codestar - Project managing code. Collorbation tool
-
-Codecommit - Source control service
-
-Codebuild - Complies and test your code
-
-Codedeploy - Automates your application deployment
-
-Codepiple - CDS
-
-X-Ray - Used to debug your serverless application
-
-Cloud9 - Online IDE
-
-CloudWatch - Monitoring
-
-CloudFormation - Infrastructure as Code
-
-CloudTrail - API logging
-
-Config - Monitor AWS account config
-
-OpsWorks - Config management using Chef or Puppet
-
-Service Catalog - Managing IT services approved for use
-
-Systems Manager - Patch maintenance
-Trusted Advisor - Gives advice on security, cost
-
-Elastic Transcoder - Video transcoding. Sizing videos for various devices
-
-
-Lex - Powers Alexa
-
-
-Polly - Text to speech
-
-Rekognition - Analyse images and video
-
-Amazon translate - Language translate
-
-Amazon Transcribe - Automatic speech regonition
-
-Athena - run SQL queries against S3 buckets
-
-Elastic Map Reduce - managed software framework used to process large data sets in a distributed computing environment. Used for data analysis, web indexing, data warehousing, machine learning, financial analysis, scientific simulation etc. EMR supports workloads based on Hadoop, Apache Spark, Presto and Apache HBase.
-
-CloudSearch
-
-ElasticSearch Service
-
-Kinesis - Ingesting large amounts of data
-
-Kinesis Video Streams - Ingesting lots of video streams
-
-Data Pipeline - Moving data between AWS services
-
-IAM - Identity and Management access
-
-Cognito - Mobile Device authentication using federated accounts Facebook etc
-
-Guard Duty -
-
-Inspector - Anaylse instance security using agent
-
-Macie - Scans S3 buskets for personal iD numbers
-
-Certificate manager - Free SSL certs
-
-CloudHSM - Hardware security module which store keys
-
-Directory services - Connect AWS to onside AD
-
-WAF Web application firewall - L7 firewall
-
-Shield - DDOS mitigation
-
-Artifcat - AWS compliance reports
-
-SNS - Simple Notification Service
-
-SQS - Simple Queue Service -  is a web service that gives you access to message queues that store messages waiting to be processed. With Amazon SQS, you can quickly build message queuing applications that can run on any computer. Amazon SQS can help you build a distributed application with decoupled components, working closely with the Amazon Elastic Compute Cloud (Amazon EC2) and other AWS infrastructure web services.
-
-SWF - Simple Workflow Service
-
-Simple Email Service - Sending emails to customers
-
-WorkMail - Office365
-
-Workspaces - VDI
+[https://digitalcloud.training/certification-training/aws-developer-associate/](https://digitalcloud.training/certification-training/aws-developer-associate/)
 
 # IAM
 
@@ -281,6 +146,8 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 * SNI to load multiple SSL certs to servce multple websites on one server on ALB and NLB
 * HTTPS listener: to offload the work of encryption and decryption to your load balancer so that your applications can focus on their business logic. Must deploy at least one SSL server certificate on the listener. Application Load Balancer can be used to securely authenticate users for accessing applications via HTTP listener and Cognito User Pools, see [here](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/listener-authenticate-users.html).
 * Access Logs: Elastic Load Balancing provides access logs that capture detailed information about requests sent to load balancer
+* Lambda: register Lambda functions as targets and configure a listener rule to forward requests to the target group for your Lambda function
+
 
 ## Auto Scaling Groups
 * Cross AZ, but regional
@@ -453,13 +320,16 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
       * ECS tasks can have IAM roles to execute actions against AWS
   * Fargate: Serverless
   * EKS: managed Kubernetes
-* Use IAMTaskRoles for ECS tasks. Task management strategies: 
+* Task definition: can define multiple containers in a task definition. Use IAMTaskRoles for ECS tasks. Task management strategies: 
    * binpack: place tasks based on the least available amount of CPU or memory. cost-efficient.
    * random
    * spread: place tasks evenly based on the specific value
 * Load balancing: When launching a task, don't specify host port but only the container port, and ALB dynamic forwarding will root the traffic to random port, which allows multiple containers of the same type to launch on the same instance
 * Deregistering: If terminate a container instance in the RUNNING state, that container instance is automatically removed from the cluster. However if terminate a container instance in the STOPPED state, that container instance isn't automatically removed from the cluster.
-  
+* Port mapping: allow containers to access ports on the host container instance to send or receive traffic
+  * container port: bound to the user-specified or automatically assigned host port
+  * host port: reserve for your container. set the host port number to **0** and ECS will automatically assign an available port
+
 ### ECR
 ECR is used to store Docker images
 
@@ -573,7 +443,7 @@ After a message has been published to a topic it cant be deleted (recalled)
     * Retries with backoff
     * Increas shards (scaling)
     * Ensure partition key is a good one
-* KCL: Each KCL consumer application instance uses "workers" to process data in Kinesis shards. At any given time, __each shard of data records is bound to a particular worker__ via a lease.
+* KCL(Kinesis Client Library): Each KCL consumer application instance uses "workers" to process data in Kinesis shards. At any given time, __each shard of data records is bound to a particular worker__ via a lease.
   
 ## Simple Workflow Service (SWF)
 
@@ -630,6 +500,10 @@ After a message has been published to a topic it cant be deleted (recalled)
   * SNS/Lambda E.g. Deletion of branches, trigger for push in master, notify external build system, trigger Lambda function for code analysis
   * CloudWatch events. E.g. trigger for pull requests, commit comment events, event rules go to SNS topic
 * Encryption at rest
+* Security. IAM supports CodeCommit with three types of credentials:
+  * Git credentials:  an IAM -generated user name and password pair you can use to communicate with CodeCommit repositories over HTTPS.
+  * SSH keys: a locally generated public-private key pair that you can associate with your IAM user to communicate with CodeCommit repositories over SSH.
+  * AWS access keys: which you can use with the credential helper included with the AWS CLI to communicate with CodeCommit repositories over HTTPS.
 
 ### CodePipeline
 Troubleshooting: 
@@ -657,14 +531,12 @@ Troubleshooting:
 * AppSpec:
   * File section
   * Hooks: set of instructions to manage deployment
-      * ApplicationStop
-      * DownloadBundle
-      * BeforeInstall
-      * AfterInstall
-      * ApplicationStart
-      * ***ValidateService***
+    * EC2: ApplicationStop > DownloadBundle > BeforeInstall > AfterInstall > ApplicationStart > **ValidateService***
+    * Lambda: BeforeAllowTraffic -> AfterAllowTraffic
+    * ECS: BeforeInstall > AfterInstall > AfterAllowTestTraffic > BeforeAllowTraffic > AfterAllowTraffic
+      
 * Deployment:
-  * In-place Deployment: The application on each instance in the deployment group is stopped, the latest application revision is installed, and the new version of the application is started and validated
+  * In-place Deployment: The application on each instance in the deployment group is stopped, the latest application revision is installed, and the new version of the application is started and validated. Only for EC2/On-Premises.
   * Blue/Green deployment: CodeDeploy provisions your new application version alongside the old version before rerouting your production traffic.
     * AWS Lambda: Traffic is shifted from one version of a Lambda function to a new version of the same Lambda function.
     * Amazon ECS: Traffic is shifted from a task set in your Amazon ECS service to an updated, replacement task set in the same Amazon ECS service.
@@ -719,12 +591,15 @@ Infrastructure as code.
 
 ## X-Ray
 * Visual analysis of application
-* Annotations: used for indexing traces and use with filters
+* Concepts:
+  * Segment: break down the data about the work done into subsegments. 
+  * Subsegments provide more granular timing information and details about downstream calls.
+  * Annotations: for adding system or user-defined data， used for indexing traces and use with filters
+  * Metadata: not indexed, additional data
 * Leverages tracing, end-to-end way of following a request
 * Application needs to import the SDK and the instance needs to install the X-Ray daemon or need to enable X-Ray integration.
    * To make X-Ray work on EC2, ensure IAM role is correct and the daemon is running
    * To make X-Ray work on Lambda, ensure it has IAM execution role with proper policy (AWSX-RayWriteOnlyAccess) and X-Ray SDK is imported in the code
-* Instrumentation.
 * Sampling rule: by default X-Ray records the first request every second (reservoir) and 5% (rate) of any addtional requests. Customer rules can change the reservoir and the rate. By customizing sampling rules, you can control the amount of data that you record.
 * Elastic Beanstalk includes X-Ray daemon. Run by setting `.ebextensions/xray-daemon.config`. Make sure instance profile has the right IAM role and applicaiton code imports X-Ray SDK.
 * X-Ray on ECS, three patterns: 
@@ -787,7 +662,7 @@ SaaS – AWS manages everything except user credentials.
 
 * VPC Peering: connect two VPCs, privately using AWS network, not transitive. The peered VPCs must not have overlapping CIDR.
 
-* VPC Endpoints: connect to AWS services from with a VPC using a private network. Gateway for S3 and DynamoDB, ENI for the rest.
+* **VPC Endpoints**: connect to AWS services from with a VPC using a private network. Gateway for S3 and DynamoDB, ENI for the rest.
 
 * From on-premise to AWS: VPN goes over the public internet, Direct Connect goes over a private network by establishing a physical connection.
 
@@ -823,7 +698,7 @@ SaaS – AWS manages everything except user credentials.
 ### Performance
 * RAM: from 128M to 3008M in 64M increment. The more RAM added, the more vCPU credits to get. If application is CPU-bound (computational heave), add more RAM.
 * Timeout: default 3s, max is 15min.
-* Execution context: temporary runtime environment that initializes dependencies for Lambda. **So intilization code should be outside the function handler and reuse it across executions.** It includes `/tmp` directory that can be used to write heavy files, max 512M. For permanent file storage, use S3.
+* Execution context: temporary runtime environment that initializes dependencies for Lambda. **So intilization code should be outside the function handler and reuse it across executions.** It includes `/tmp` directory that can be used to write heavy files, max 512M. For permanent file storage, use S3 or even DynamoDB.
 
 ### Concurrency
 * Up to 1000 concurrent excecutions per account. Set a **reserved concurrency** to limit this number. Each invocation over the concurrency will trigger a throttle.
@@ -882,6 +757,7 @@ SaaS – AWS manages everything except user credentials.
   * HTTP_PROXY: HTTP request is passed to backend, no mapping template
 * Caching: default TTL 300s. 0 - 3600s. Can be defined per stage. To invalidate cache, client sends header `Cache-Control: max-age=0` with proper IAM authorization
 * CloudWatch metrics: 
+  * `4XXError` and `5XXError`: client-side  and server-side errors
   * `CacheHitCount` and `CacheMissCount`: efficiency of the cache
   * `Count`: total number of API requests
   * `IntegrationLatency`: between API Gateway relays a request to the backend and backend response  
