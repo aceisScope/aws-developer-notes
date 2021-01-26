@@ -113,6 +113,7 @@ Comparing to IAM, Cognito is for "hundreds of users", "mobile users", "Social Id
 
 Access instance meta data at http://169.254.169.254/latest/meta-data/
 
+* Instance profile: a container for an IAM role that you can use to pass role information to an EC2 instance when the instance starts
 * Scipts can be run from the user data section when creating an instance
 * Instance purchasing options
   * On-Demand Instances – Pay, by the second, for the instances that you launch.
@@ -273,7 +274,7 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 
 ### Static Websites
 
-* S3 cab host static websites `<bucket-name>.s3-website.<AWS-region>.com`. Neet to make bucket policy allow public reads otherwise will get 403.
+* S3 cab host static websites `<bucket-name>.s3-website.<AWS-region>.com`. Neet to make bucket policy allow public reads otherwise will get 403, create a bucket policy that grants everyone the `s3:GetObject` permission.
 * CORS (Cross-Origin resource sharing) enables a way for client web applications loaded in one domain to interact with resources in a different domain. If a client does a cross-origin request on S3 bucket, we need to enable correct CORS headers `"AllowOrigins":<First-bucket-name>` on the cross origin bucket.
 
 ### Advanced
@@ -320,10 +321,13 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
       * ECS tasks can have IAM roles to execute actions against AWS
   * Fargate: Serverless
   * EKS: managed Kubernetes
-* Task definition: can define multiple containers in a task definition. Use IAMTaskRoles for ECS tasks. Task management strategies: 
-   * binpack: place tasks based on the least available amount of CPU or memory. cost-efficient.
-   * random
-   * spread: place tasks evenly based on the specific value
+* Task definition: can define multiple containers in a task definition. Use IAMTaskRoles for ECS tasks. 
+  * Task placement strategies: 
+    * binpack: place tasks based on the least available amount of CPU or memory. cost-efficient.
+    * random
+    * spread: place tasks evenly based on the specific value
+   * Task Placement Constraints: a rule that is considered during task placement
+   * Cluster query language: expressions that enable you to group objects
 * Load balancing: When launching a task, don't specify host port but only the container port, and ALB dynamic forwarding will root the traffic to random port, which allows multiple containers of the same type to launch on the same instance
 * Deregistering: If terminate a container instance in the RUNNING state, that container instance is automatically removed from the cluster. However if terminate a container instance in the STOPPED state, that container instance isn't automatically removed from the cluster.
 * Port mapping: allow containers to access ports on the host container instance to send or receive traffic
@@ -410,7 +414,7 @@ ECR is used to store Docker images
 * FIFO queue: exactly-once send capability, maintain ordering. Limited throughput: 300 ms/s without batch, 3000 with.
   * Deduplication interval is 5mins. Two methods: content-based or explicitly provide a `MessageDeduplicationID`.
   * **MessageGroupID**: Each Group ID have a different consumer. Messages in the same group sharing the same `MessageGroupID` will be in order, but across-group ordering is not guaranteed. 
-  * MessageDeduplicationId: If a message with a particular message deduplication ID is sent successfully, any messages sent with the same message deduplication ID are accepted successfully but aren't delivered during the 5-minute deduplication interval.
+  * **MessageDeduplicationId**: If a message with a particular message deduplication ID is sent successfully, any messages sent with the same message deduplication ID are accepted successfully but aren't delivered during the 5-minute deduplication interval.
 
 ## Simple Notification Service (SNS)
 
