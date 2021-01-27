@@ -584,6 +584,7 @@ Infrastructure as code.
 
 ## CloudWatch
 * Metrics: a variable to monitor, belong to namespaces. EC2 details monitoring get metrics every 1 minute instead of 5. Customer high resolution metrics standard is 1 min, can be up to 1 second. To create custom metrics, use API PutMetricData.
+  * Namespace: is a container for CloudWatch metrics. Metrics in different namespaces are isolated from each other
 * Alarms: used to trigger notification for metrics. High resolution metric alarm can be trigger at 10 or 30 s.
 * Logs: can go to batch exporter to **S3** for archival or stream to **ElasticSearch** for analysis. Never expire by default, but can define expiration policy at log groups level. Make sure IAM permission correct to send logs to CloudWatch. 
   * EC2 needs to install a CloudWatch agent to push logs. 
