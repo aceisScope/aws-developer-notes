@@ -67,7 +67,9 @@ Table of Contents
     * Resource-based policies – Attach inline policies to resources. The most common examples of resource-based policies are Amazon S3 bucket policies and IAM role trust policies.
       * IAM service supports only one type of resource-based policy called a role trust policy, which is attached to an IAM role. An IAM role is both an identity and a resource that supports resource-based policies. 
     * Permissions boundaries – Use a managed policy as the permissions boundary for an IAM entity (user or role). That policy defines the maximum permissions that the identity-based policies can grant to an entity. **Do not grant permissions**.
-    * Organizations SCPs – Use an AWS Organizations service control policy (SCP) to define the maximum permissions for account members of an organization or organizational unit (OU). **Do not grant permission**.
+    * Organizations SCPs – Use an AWS Organizations service control policy (SCP) to define the maximum permissions for account members of an organization or organizational unit (OU). **Do not grant permission**. 
+      * A deny list – actions are allowed by default, and you specify what services and actions are prohibited
+      * An allow list – actions are prohibited by default, and you specify what services and actions are allowed
     * Access control lists (ACLs) – Use ACLs to control which principals in other accounts can access the resource to which the ACL is attached. 
     * Session policies – Pass advanced session policies when you use the AWS CLI or AWS API to assume a role or a federated user. 
   * IAM policy variables: Instead of creating individual policies for each user, you can use policy variables and create a single policy that applies to multiple users (a group policy). 
@@ -105,7 +107,10 @@ Comparing to IAM, Cognito is for "hundreds of users", "mobile users", "Social Id
 
 ### Secrets Store
 * SSM Parameter Store: secure storage for configuration and secrets. Can create secure string parameters, which are parameters that have a plaintext parameter name and an encrypted parameter value. KMS is optional. 
-* Secret Manager: store secrets, capability to force totation of secrects every X days. Integration with RDS. KMS is mandatory. 
+* Secret Manager: store secrets, capability to force totation of secrects every X days. Integration with RDS. KMS is mandatory.
+
+### CloudHSM
+* A Hardware Security Module (HSM) provides secure key storage and cryptographic operations within a tamper-resistant hardware device
 
 # EC2
 
@@ -348,7 +353,10 @@ ECR is used to store Docker images
   2. Partition Key + Sort Key. The combination must be unique. Data is grouped by partition key.
 * [DynamoDB APIs](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/Welcome.html)
   * Query - a query find items in a table using only the primary key (sort key is optional). Query is more efficient than scan. 
-  * Scan - a scan operation examines every item in the table. By default a scan returns all of the data attributes for every item. You can use the  `ProjectionExpression + FilterExpression` parameter so that Scan only returns some of the attributes. For faster performance,use parallel scans. To minimum the impact of scan on provisioned throughput, reduce page size.
+  * Scan - a scan operation examines every item in the table. By default a scan returns all of the data attributes for every item. You can use the  `ProjectionExpression + FilterExpression` parameter so that Scan only returns some of the attributes. 
+    * For faster performance,use parallel scans. 
+    * Use the Limit parameter on table's throughput so that it doesn’t interfere with more important operations
+    * To minimum the impact of scan on provisioned throughput, reduce page size.
 * TTL: automatically delete an item after expiry time
 * CLI:
   * `--projection-expression`: to get only some of the attributes rather than all of them
@@ -575,6 +583,8 @@ Infrastructure as code.
     * __Metadata__ (optional) - objects that provide additional information about the template.
 * To create a cross-stack reference, use the **Export** output field to flag the value of a resource output for export. Then, use the `Fn::ImportValue` intrinsic function to import the value. For each AWS account, Export names must be unique within a region.
 * Stack creation rollback (get deleted) on error is enabled by default. Stack update rollback will reset the stack to the previous state.
+* Change sets: allow you to preview how proposed changes to a stack might impact your running resources
+* StackSets: enable to create, update, or delete stacks across **multiple accounts and regions** with a single operation
 * Use function Fn:GetAtt to output data
 * CLI commands: 
   * `cloudformation package`: packages the local artifacts (local paths) that your AWS CloudFormation template references. The command will upload local artifacts, such as your source code for your AWS Lambda function.
