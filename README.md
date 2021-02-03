@@ -101,7 +101,7 @@ Comparing to IAM, Cognito is for "hundreds of users", "mobile users", "Social Id
 ### KMS
 * Key Management Service managed by AWS. Keys are bound to region. 
   * Cusomter Master Keys: AES-256 or RSA & ECC. Three types: AWS default, user keys created in KMS and user keys imported
-* Envelope Encryption: KMS Encrypt API has a limit for 4K, to encrypt > 4K need to use Envelope Encryption `GenerateDataKey` API
+* Envelope Encryption: KMS Encrypt API has a limit for 4K, to encrypt > 4K need to use Envelope Encryption `GenerateDataKey` API, to encrypt plaintext data with a data key and then encrypt the data key with a top-level plaintext master key.
 * All cryptographic operations shall the same quota. Over the quota will get `ThrottlingException`
 * CloudWatch logs can be encrypted with KMS keys: `associate-kms-key` and `create-log-group` API to associate a CMK with a log group
 
@@ -257,7 +257,7 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 * Server-Side
   1. SSE-KMS: KMS-Managed Encryption keys. Give user control and audit trail. Must set header `"x-amz-server-side-encryption":"aws:kms"`
   2. SSE-S3: Amazon S3-Managed Encryption keys. Must set header `"x-amz-server-side-encryption":"AES-256"`
-  3. SSE-C: Customer-Provided Encryption keys. S3 does not store the key. Must use HTTPS. Must provide key in header.
+  3. SSE-C: Customer-Provided Encryption keys. S3 does not store the key. Must use HTTPS. Must provide key in header. Must set header `x-amz-server-side-encryption-customer-algorithm`, `x-amz-server-side-encryption-customer-key`, `x-amz-server-side-encryption-customer-key-MD5`
 
 * Client-Side
   1. AWS KMS-managed customer master key
@@ -268,7 +268,7 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 * If user IAM allows or resource policy ALLOWs, an IAM principal can access an S3 object. Unless there's an explicit DENY in IAM policy. `Total Policy = IAM policy + S3 Bucket Policy`
 * Bucket policy: JSON based. ALLOW / DENY.
   * To force SSL, create a bucket policy with DENY on `aws:SecureTransport=false`
-  * To force SSE-KMS encryption: DENY incorrect encryption header, make sure it includes `asw:kms` and DENY no encryption header
+  * To force SSE-KMS encryption: DENY incorrect encryption header, make sure it includes `aws:kms` and DENY no encryption header
 * Bucket settings for blocking public access to prevent data leaks
 * Managing access examples:
   * [Bucket owner granting its users bucket permissions](https://docs.aws.amazon.com/AmazonS3/latest/dev/example-walkthroughs-managing-access-example1.html)
@@ -447,14 +447,17 @@ After a message has been published to a topic it cant be deleted (recalled)
   * Kinesis Streams: low latency streaming ingest at scale
   * Kinesis Analytics: real-time analysis on streams using SQL
   * Kinesis Firehose: load streams into S3, Redshift, ElasticSearch, ...
+  
+### Kinesis Data Stream
 * Streams are devided into shards. ***Records are ordered per shard***. 1MB/s.
-* Data retention is 1 day by default, up to **7 days**
-* Data can't deleted once inserted into Kinesis
-* Put Records: PutRecordAPI + Partition key that gets hashed, same key goes to the same partition
-* ProvisionedThroughputExceededExceptions: sending too much data for one shard. Solution:
+  * Put Records: PutRecordAPI + Partition key that gets hashed, same key goes to the same partition
+  * ProvisionedThroughputExceededExceptions: sending too much data for one shard. Solution:
     * Retries with backoff
     * Increas shards (scaling)
     * Ensure partition key is a good one
+  * Split the hot shards to increase capability and merge cold shards to decrease capability to make better use of their unused capacity
+* Data retention is 1 day by default, up to **7 days**
+* Data can't deleted once inserted into Kinesis
 * KCL(Kinesis Client Library): Each KCL consumer application instance uses "workers" to process data in Kinesis shards. At any given time, __each shard of data records is bound to a particular worker__ via a lease.
   
 ## Simple Workflow Service (SWF)
@@ -487,6 +490,7 @@ After a message has been published to a topic it cant be deleted (recalled)
 * Can have at most 1000 versions. Lifecycle policy: based on time (old versions are removed) or space 
 * Cloning with exactly the same configuration, good for testing. **Migration** cross-account: Create a saved configuration in Team A's account and download it to local machine. Make the account-specific parameter changes and upload to the S3 bucket in Team B's account. From Elastic Beanstalk console, create an application from the saved Configurations.
 * Extensions: Any resources created as part of `.ebextensions` is part of EB template and will get deleted if the environment is terminated
+* Environment manifest: `env.yaml` in the root of application source bundle 
 * Platforms: see [here](https://docs.aws.amazon.com/elasticbeanstalk/latest/platforms/platforms-supported.html)
   * Docker: Can run the application as a single docker, doesn't use ECS; ECS can run multiple dockers per EC2 instance in EB, requires `Dockerrun.aws.json(v2)` at the root of source code to generate the ECS task definition 
   * MultiDocker
@@ -618,7 +622,7 @@ Infrastructure as code.
 * Sampling rule: by default X-Ray records the first request every second (reservoir) and 5% (rate) of any addtional requests. Customer rules can change the reservoir and the rate. By customizing sampling rules, you can control the amount of data that you record.
 * Elastic Beanstalk includes X-Ray daemon. Run by setting `.ebextensions/xray-daemon.config`. Make sure instance profile has the right IAM role and applicaiton code imports X-Ray SDK.
 * X-Ray on ECS, three patterns: 
-  1. As daemon: X-Ray container as a daemon on each instances
+  1. As daemon: X-Ray container as a daemon on each instances, on UDP port 2000
   2. As side-car: X-Ray daemon container alongside each application container
   3. Fargate claster: side-car
 
@@ -662,7 +666,7 @@ SaaS – AWS manages everything except user credentials.
 
 * Subnet: AZ
     * public and private
-    * ***Route tables***: to define access between internet and subnets
+    * ***Route tables***: to define access between internet and subnets. A subnet can only be associated with one route table at a time; multiple subnets can be associated with the same route table
     * By default all traffic between subnets is allowed
 
 * Internet Gateway helps VPC instances connect with the internet. One IGW per VPC. A public subnet always has a route to IGW.
@@ -787,7 +791,7 @@ SaaS – AWS manages everything except user credentials.
     * How: Create a resource policy for the APIs that allows access for each IAM user. Create an IAM permission policy and attach it to each IAM user. Set the APIs method authorization type to AWS_IAM. Use Signature Version 4 to sign the API requests.
   * Cognito user tools: pass token. Cognito user tools. Authentication = Cognito User Pools | Authorization = API Gateway Methods
   * Lambda authorizer: request parameter-based token authorizer. Authentication = External | Authorization = Lambda function. 
-    * A Lambda authorizer is useful if you want to implement a **custom authorization scheme** that uses a bearer token authentication strategy such as OAuth or SAML, or that uses request parameters to determine the caller's identity.
+    * A Lambda authorizer is useful if you want to implement a **custom authorization scheme** that 1. uses a bearer token authentication strategy such as OAuth or SAML, or 2. that uses request parameters to determine the caller's identity.
 * API Gateway Usage Plans: specify who can access one or more deployed API stages and methods—and also how much and how fast they can access them 
 
 # SAM
