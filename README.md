@@ -108,6 +108,7 @@ Comparing to IAM, Cognito is for "hundreds of users", "mobile users", "Social Id
 ### Secrets Store
 * SSM Parameter Store: secure storage for configuration and secrets. Can create secure string parameters, which are parameters that have a plaintext parameter name and an encrypted parameter value. KMS is optional. 
 * Secret Manager: store secrets, capability to force totation of secrects every X days. Integration with RDS. KMS is mandatory.
+* AWS Certificate Manager：provision, manage, and deploy your server certificates. Use IAM as a certificate manager only when you must support HTTPS connections in a Region that doesn't support ACM.
 
 ### CloudHSM
 * A Hardware Security Module (HSM) provides secure key storage and cryptographic operations within a tamper-resistant hardware device
@@ -288,6 +289,7 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 * When versioning is on, S3 MFA-Delete can be enabled. It can only be done by bucket owner via AWS CLI.
 * Access logs for auditing. Don't set logging bucket to be the monitored bucket. 
 * CRR and SRR (Cross and Same region replication) requires proper IAM permission to S3 for copying data
+  * To enable CRR: 1. The source and destination buckets must have **versioning** enabled. 2. The source and destination buckets must be in different AWS Regions. 3. Amazon S3 must have permissions to replicate objects from that source bucket to the destination bucket on your behalf.
 * Presigned-URL is valid for 3600s, can be changed with `--expires-in` arg.
 * Lifecyle rules can be created for a specific prefix
     * Transition actions
