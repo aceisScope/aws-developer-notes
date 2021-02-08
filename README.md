@@ -160,6 +160,7 @@ Access instance meta data at http://169.254.169.254/latest/meta-data/
 * Cross AZ, but regional
 * [Scaling policies: target tracking, simple/step, schedule action](https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-scale-based-on-demand.html#as-scaling-types)
 * [Cooldowns](https://docs.aws.amazon.com/autoscaling/ec2/userguide/Cooldown.html)
+* Manual scaling: update desired capacity
 
 # EBS & EFS
 
@@ -389,7 +390,7 @@ ECR is used to store Docker images
 
 ### Indexes
 * Local Secondary Index: same partition key but different sort key (local to the hash key). Must be defined when creating a table.
-* Global Secondary Index: Different partition key and different sort key (whole new different table). Can be created at table creation or added later. If writes are throttled on GSI, the main table will be throttled.  
+* Global Secondary Index: Different partition key and different sort key (whole new different table). Support eventually consistent reads. Can be created at table creation or added later. If writes are throttled on GSI, the main table will be throttled.  
 
 ### Streams
 * Changes in DynamoDB (CREATE, UPDATE, DELETE). Max 24 hour retention. Can be read by EC2 or Lambda. Could be used to implement cross-region replication.
@@ -722,6 +723,7 @@ SaaS – AWS manages everything except user credentials.
 * RAM: from 128M to 3008M in 64M increment. The more RAM added, the more vCPU credits to get. If application is CPU-bound (computational heave), add more RAM.
 * Timeout: default 3s, max is 15min.
 * Execution context: temporary runtime environment that initializes dependencies for Lambda. **So intilization code should be outside the function handler and reuse it across executions.** It includes `/tmp` directory that can be used to write heavy files, max 512M. For permanent file storage, use S3 or even DynamoDB.
+* Customer runtime: a program that runs a Lambda function's handler method when the function is invoked. It's responsible for running the function's setup code, reading the handler name from an environment variable, and reading invocation events from the Lambda runtime API
 
 ### Concurrency
 * Up to 1000 concurrent excecutions per account. Set a **reserved concurrency** to limit this number. Each invocation over the concurrency will trigger a throttle.
@@ -774,7 +776,7 @@ SaaS – AWS manages everything except user credentials.
 * Canary depployment: choose % of the traffic the canary channel receives
 * Integration types:
   * MOCK: return a response without sending request to backend
-  * HTTP/AWS: must configure both integration request and response. Setup data mapping using mapping templates.
+  * HTTP/AWS (Lambda Custom integration): must configure both integration request and response. Setup data mapping using mapping templates.
     * Mapping templates: can be used to modify request/response. Like query strings, body content, headers. E.g. JSON to XML with SOAP
   * AWS_PROXY: incoming request from the client is the input to Lambda. No mapping templates, header, ... they are passed as arguments
   * HTTP_PROXY: HTTP request is passed to backend, no mapping template
