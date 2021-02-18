@@ -1,6 +1,6 @@
 # AWS Certified Developer - Associate Study notes
 
-These are my study notes for the AWS Certified Developer - Associate certification. I have already passed the Solutions Architect - Associate exam so the notes might not cover topics if i feel i already know it well enough.
+These are my study notes for the AWS Certified Developer - Associate certification. I have already passed the Developer - Associate exam in Februrary 2021.
 
 Table of Contents
 =================
